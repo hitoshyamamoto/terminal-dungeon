@@ -17,6 +17,7 @@ import {
   colorize,
 } from "../shared/utils.js";
 import { TCP_BASE_PORT } from "../shared/types.js";
+import { findAvailablePortSmart } from "../shared/port-utils.js";
 import type { ClientMessage, ActionMessage } from "../shared/types.js";
 import pino from "pino";
 
@@ -40,6 +41,31 @@ class ServerHost {
 
     this.loadDecks();
     this.setupCommands();
+    this.setupSignalHandlers();
+  }
+
+  private setupSignalHandlers(): void {
+    // Handle Ctrl+C (SIGINT)
+    process.on("SIGINT", () => {
+      console.log(); // New line after ^C
+      console.log(colorize("\nReceived SIGINT (Ctrl+C)", "yellow"));
+      this.shutdown();
+      process.exit(0);
+    });
+
+    // Handle kill/terminate signals (SIGTERM)
+    process.on("SIGTERM", () => {
+      console.log(colorize("\nReceived SIGTERM", "yellow"));
+      this.shutdown();
+      process.exit(0);
+    });
+
+    // Handle uncaught exceptions
+    process.on("uncaughtException", (err) => {
+      logger.error("Uncaught exception:", err);
+      this.shutdown();
+      process.exit(1);
+    });
   }
 
   private loadDecks(): void {
@@ -127,8 +153,12 @@ class ServerHost {
 
     this.lobby = new Lobby(lobbyId, code, hostId, name, passwordHash);
 
+    // Find available TCP port (try base port first, then search)
+    console.log(colorize("Finding available port...", "dim"));
+    const port = await findAvailablePortSmart(TCP_BASE_PORT);
+    console.log(colorize(`Using port ${port}`, "dim"));
+
     // Start TCP server
-    const port = TCP_BASE_PORT;
     this.server = new GameServer(port);
     this.server.onMessage = (playerId, msg) => this.handleClientMessage(playerId, msg);
     await this.server.start();
