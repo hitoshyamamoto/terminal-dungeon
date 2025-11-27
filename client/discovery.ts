@@ -52,8 +52,14 @@ export class ClientDiscovery {
         reject(err);
       });
 
-      this.socket.bind(UDP_PORT, () => {
+      // Use exclusive: false to allow multiple clients on same machine
+      this.socket.bind({
+        port: UDP_PORT,
+        address: "0.0.0.0",
+        exclusive: false,
+      }, () => {
         console.log(`[Discovery] Listening for lobbies on UDP port ${UDP_PORT}...`);
+        console.log(`[Discovery] SO_REUSEPORT enabled - multiple clients per machine allowed`);
         this.expirationInterval = setInterval(() => this.expireLobbies(), 3000);
         resolve();
       });
