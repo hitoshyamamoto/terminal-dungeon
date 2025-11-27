@@ -1,0 +1,101 @@
+deck:
+  kind: treasures
+  id: treasure_02
+  name: "Magical Artifacts"
+  version: 1
+  language: "en"
+  cards:
+    # ========== TIER 1 ITEMS ==========
+    - id: T101
+      tier: 1
+      type: item
+      name: "Wand of Sparks"
+      slot: weapon
+      size: small
+      bonus: 2
+      text: "A simple wand that shoots sparks."
+      repeat: 2
+
+    - id: T102
+      tier: 1
+      type: item
+      name: "Enchanted Robe"
+      slot: armor
+      size: big
+      bonus: 1
+      text: "Lightweight magical protection."
+      repeat: 2
+
+    - id: T103
+      tier: 1
+      type: inst
+      name: "Potion of Strength"
+      effect: "+3 power in one combat only."
+      text: "+3 power in one combat only."
+      repeat: 3
+
+    - id: T104
+      tier: 1
+      type: levelup
+      name: "Scroll of Power"
+      effect: "Go up 1 level."
+      text: "Go up 1 level."
+      repeat: 2
+
+    # ========== TIER 2 ITEMS ==========
+    - id: T105
+      tier: 2
+      type: item
+      name: "Staff of Lightning"
+      slot: weapon
+      size: big
+      bonus: 4
+      text: "Channels the power of storms."
+      repeat: 2
+
+    - id: T106
+      tier: 2
+      type: item
+      name: "Crystal Shield"
+      slot: shield
+      size: big
+      bonus: 3
+      text: "Magical shield made of pure crystal."
+      repeat: 1
+
+    - id: T107
+      tier: 2
+      type: inst
+      name: "Elixir of Might"
+      effect: "+5 power in one combat."
+      text: "+5 power in one combat."
+      repeat: 2
+
+    # ========== TIER 3 ITEMS ==========
+    - id: T108
+      tier: 3
+      type: item
+      name: "Archmage's Staff"
+      slot: weapon
+      size: big
+      bonus: 6
+      text: "The ultimate magical weapon."
+      repeat: 1
+
+    - id: T109
+      tier: 3
+      type: item
+      name: "Legendary Amulet"
+      slot: headgear
+      size: small
+      bonus: 4
+      text: "Ancient artifact of immense power."
+      repeat: 1
+
+    - id: T110
+      tier: 3
+      type: levelup
+      name: "Ancient Tome"
+      effect: "Go up 2 levels."
+      text: "Go up 2 levels."
+      repeat: 1

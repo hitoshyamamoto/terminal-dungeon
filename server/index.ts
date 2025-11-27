@@ -8,7 +8,7 @@ import { Lobby } from "./lobby.js";
 import { Game } from "./game.js";
 import { GameServer } from "./net.js";
 import { DiscoveryBeacon } from "./discovery.js";
-import { loadDecksFromDir } from "../shared/deck-loader.js";
+import { loadDecksFromDir, mergeDecks } from "../shared/deck-loader.js";
 import type { LoadedDeck } from "../shared/deck-loader.js";
 import {
   generateLobbyCode,
@@ -80,10 +80,15 @@ class ServerHost {
   private setupCommands(): void {
     console.log(colorize("\n=== Terminal Dungeon Server ===\n", "cyan"));
     console.log("Commands:");
-    console.log("  create <name>  - Create a lobby");
-    console.log("  start          - Start the game");
-    console.log("  status         - Show lobby status");
-    console.log("  quit           - Stop server");
+    console.log("  create <name>           - Create a lobby");
+    console.log("  list-decks              - List available decks");
+    console.log("  show-decks              - Show selected decks");
+    console.log("  add-deck <kind> <id>    - Add deck to selection");
+    console.log("  remove-deck <kind> <id> - Remove deck from selection");
+    console.log("  clear-decks <kind>      - Clear all decks of a kind");
+    console.log("  start                   - Start the game");
+    console.log("  status                  - Show lobby status");
+    console.log("  quit                    - Stop server");
     console.log();
 
     this.rl.prompt();
@@ -113,6 +118,21 @@ class ServerHost {
       switch (command) {
         case "create":
           await this.cmdCreate(parts.slice(1).join(" "));
+          break;
+        case "list-decks":
+          this.cmdListDecks();
+          break;
+        case "show-decks":
+          this.cmdShowDecks();
+          break;
+        case "add-deck":
+          this.cmdAddDeck(parts[1], parts[2]);
+          break;
+        case "remove-deck":
+          this.cmdRemoveDeck(parts[1], parts[2]);
+          break;
+        case "clear-decks":
+          this.cmdClearDecks(parts[1]);
           break;
         case "start":
           await this.cmdStart();
@@ -199,16 +219,30 @@ class ServerHost {
       return;
     }
 
-    // Load selected decks
-    const doorDeck = this.doorDecks.get(this.lobby.selectedDecks.doors);
-    const treasureDeck = this.treasureDecks.get(
-      this.lobby.selectedDecks.treasures
-    );
-
-    if (!doorDeck || !treasureDeck) {
-      console.log(colorize("Selected decks not found.", "red"));
-      return;
+    // Load and merge selected decks
+    const selectedDoorDecks: LoadedDeck[] = [];
+    for (const deckId of this.lobby.selectedDecks.doors) {
+      const deck = this.doorDecks.get(deckId);
+      if (!deck) {
+        console.log(colorize(`Door deck '${deckId}' not found.`, "red"));
+        return;
+      }
+      selectedDoorDecks.push(deck);
     }
+
+    const selectedTreasureDecks: LoadedDeck[] = [];
+    for (const deckId of this.lobby.selectedDecks.treasures) {
+      const deck = this.treasureDecks.get(deckId);
+      if (!deck) {
+        console.log(colorize(`Treasure deck '${deckId}' not found.`, "red"));
+        return;
+      }
+      selectedTreasureDecks.push(deck);
+    }
+
+    // Merge multiple decks into one
+    const doorDeck = mergeDecks(selectedDoorDecks);
+    const treasureDeck = mergeDecks(selectedTreasureDecks);
 
     // Create game
     const playerIds = Array.from(this.lobby.players.keys());
@@ -264,6 +298,162 @@ class ServerHost {
     }
     console.log(`In Game: ${this.lobby.inGame ? "Yes" : "No"}`);
     console.log();
+  }
+
+  private cmdListDecks(): void {
+    console.log(colorize("\n=== Available Decks ===", "cyan"));
+
+    console.log(colorize("\nDoor Decks:", "bright"));
+    if (this.doorDecks.size === 0) {
+      console.log("  No door decks loaded.");
+    } else {
+      for (const [id, deck] of this.doorDecks) {
+        console.log(
+          `  ${colorize(id, "bright")} - ${deck.definition.name} (${deck.cards.length} cards)`
+        );
+      }
+    }
+
+    console.log(colorize("\nTreasure Decks:", "bright"));
+    if (this.treasureDecks.size === 0) {
+      console.log("  No treasure decks loaded.");
+    } else {
+      for (const [id, deck] of this.treasureDecks) {
+        console.log(
+          `  ${colorize(id, "bright")} - ${deck.definition.name} (${deck.cards.length} cards)`
+        );
+      }
+    }
+    console.log();
+  }
+
+  private cmdShowDecks(): void {
+    if (!this.lobby) {
+      console.log(colorize("No lobby created.", "yellow"));
+      return;
+    }
+
+    console.log(colorize("\n=== Selected Decks ===", "cyan"));
+
+    console.log(colorize("\nDoors:", "bright"));
+    if (this.lobby.selectedDecks.doors.length === 0) {
+      console.log("  None selected");
+    } else {
+      for (const deckId of this.lobby.selectedDecks.doors) {
+        const deck = this.doorDecks.get(deckId);
+        const name = deck ? deck.definition.name : "Unknown";
+        console.log(`  ${colorize(deckId, "green")} - ${name}`);
+      }
+    }
+
+    console.log(colorize("\nTreasures:", "bright"));
+    if (this.lobby.selectedDecks.treasures.length === 0) {
+      console.log("  None selected");
+    } else {
+      for (const deckId of this.lobby.selectedDecks.treasures) {
+        const deck = this.treasureDecks.get(deckId);
+        const name = deck ? deck.definition.name : "Unknown";
+        console.log(`  ${colorize(deckId, "green")} - ${name}`);
+      }
+    }
+    console.log();
+  }
+
+  private cmdAddDeck(kind?: string, deckId?: string): void {
+    if (!this.lobby) {
+      console.log(colorize("No lobby created.", "yellow"));
+      return;
+    }
+
+    if (this.lobby.inGame) {
+      console.log(
+        colorize("Cannot modify decks after game has started.", "yellow")
+      );
+      return;
+    }
+
+    if (!kind || !deckId) {
+      console.log(colorize("Usage: add-deck <doors|treasures> <deckId>", "yellow"));
+      return;
+    }
+
+    if (kind !== "doors" && kind !== "treasures") {
+      console.log(
+        colorize("Kind must be 'doors' or 'treasures'.", "yellow")
+      );
+      return;
+    }
+
+    // Check if deck exists
+    const decks = kind === "doors" ? this.doorDecks : this.treasureDecks;
+    if (!decks.has(deckId)) {
+      console.log(colorize(`Deck '${deckId}' not found.`, "red"));
+      console.log(`Use 'list-decks' to see available decks.`);
+      return;
+    }
+
+    this.lobby.addDeck(kind, deckId);
+    console.log(colorize(`✓ Added ${kind} deck: ${deckId}`, "green"));
+  }
+
+  private cmdRemoveDeck(kind?: string, deckId?: string): void {
+    if (!this.lobby) {
+      console.log(colorize("No lobby created.", "yellow"));
+      return;
+    }
+
+    if (this.lobby.inGame) {
+      console.log(
+        colorize("Cannot modify decks after game has started.", "yellow")
+      );
+      return;
+    }
+
+    if (!kind || !deckId) {
+      console.log(
+        colorize("Usage: remove-deck <doors|treasures> <deckId>", "yellow")
+      );
+      return;
+    }
+
+    if (kind !== "doors" && kind !== "treasures") {
+      console.log(
+        colorize("Kind must be 'doors' or 'treasures'.", "yellow")
+      );
+      return;
+    }
+
+    this.lobby.removeDeck(kind, deckId);
+    console.log(colorize(`✓ Removed ${kind} deck: ${deckId}`, "green"));
+  }
+
+  private cmdClearDecks(kind?: string): void {
+    if (!this.lobby) {
+      console.log(colorize("No lobby created.", "yellow"));
+      return;
+    }
+
+    if (this.lobby.inGame) {
+      console.log(
+        colorize("Cannot modify decks after game has started.", "yellow")
+      );
+      return;
+    }
+
+    if (!kind) {
+      console.log(colorize("Usage: clear-decks <doors|treasures>", "yellow"));
+      return;
+    }
+
+    if (kind !== "doors" && kind !== "treasures") {
+      console.log(
+        colorize("Kind must be 'doors' or 'treasures'.", "yellow")
+      );
+      return;
+    }
+
+    this.lobby.clearDecks(kind);
+    console.log(colorize(`✓ Cleared all ${kind} decks`, "green"));
   }
 
   private handleClientMessage(playerId: string, msg: ClientMessage): void {

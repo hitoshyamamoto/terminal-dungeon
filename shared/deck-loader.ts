@@ -212,3 +212,62 @@ export function drawCards(
   return drawn;
 }
 
+/**
+ * Merge multiple decks into one
+ * Combines all cards from multiple decks and rebuilds tier indices
+ */
+export function mergeDecks(decks: LoadedDeck[]): LoadedDeck {
+  if (decks.length === 0) {
+    throw new Error("Cannot merge empty deck list");
+  }
+
+  if (decks.length === 1) {
+    return decks[0];
+  }
+
+  // Verify all decks are the same kind
+  const kind = decks[0].definition.kind;
+  for (const deck of decks) {
+    if (deck.definition.kind !== kind) {
+      throw new Error(
+        `Cannot merge decks of different kinds: ${kind} and ${deck.definition.kind}`
+      );
+    }
+  }
+
+  // Combine all cards
+  const allCards: Card[] = [];
+  for (const deck of decks) {
+    allCards.push(...deck.cards);
+  }
+
+  // Create merged definition
+  const deckIds = decks.map((d) => d.definition.id).join("+");
+  const deckNames = decks.map((d) => d.definition.name).join(" + ");
+
+  const mergedDefinition: DeckDefinition = {
+    kind,
+    id: deckIds,
+    name: deckNames,
+    version: decks[0].definition.version,
+    language: decks[0].definition.language,
+    cards: allCards,
+  };
+
+  // Rebuild tier index
+  const cardsByTier = new Map<CardTier, Card[]>();
+  cardsByTier.set(1, []);
+  cardsByTier.set(2, []);
+  cardsByTier.set(3, []);
+
+  for (const card of allCards) {
+    cardsByTier.get(card.tier)!.push(card);
+  }
+
+  return {
+    definition: mergedDefinition,
+    cards: allCards,
+    cardsByTier,
+  };
+}
+

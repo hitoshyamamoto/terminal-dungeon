@@ -18,7 +18,7 @@ export class Lobby {
   passwordHash: string;
   players: Map<string, LobbyPlayer> = new Map();
   maxPlayers: number = 6;
-  selectedDecks: { doors: string; treasures: string };
+  selectedDecks: { doors: string[]; treasures: string[] };
   manifest: LobbyManifest;
   failedAttempts: Map<string, number> = new Map();
   inGame: boolean = false;
@@ -38,8 +38,8 @@ export class Lobby {
     // Host is first player
     this.players.set(hostId, { id: hostId, name: hostName });
 
-    // Default deck selection
-    this.selectedDecks = { doors: "door_01", treasures: "treasure_01" };
+    // Default deck selection (backwards compatible - single deck)
+    this.selectedDecks = { doors: ["door_01"], treasures: ["treasure_01"] };
 
     // Default manifest
     this.manifest = {
@@ -96,12 +96,46 @@ export class Lobby {
     );
   }
 
-  selectDeck(kind: DeckKind, deckId: string): void {
+  // Add a deck to the selection
+  addDeck(kind: DeckKind, deckId: string): void {
     if (kind === "doors") {
-      this.selectedDecks.doors = deckId;
+      if (!this.selectedDecks.doors.includes(deckId)) {
+        this.selectedDecks.doors.push(deckId);
+      }
     } else {
-      this.selectedDecks.treasures = deckId;
+      if (!this.selectedDecks.treasures.includes(deckId)) {
+        this.selectedDecks.treasures.push(deckId);
+      }
     }
+  }
+
+  // Remove a deck from the selection
+  removeDeck(kind: DeckKind, deckId: string): void {
+    if (kind === "doors") {
+      this.selectedDecks.doors = this.selectedDecks.doors.filter(
+        (id) => id !== deckId
+      );
+    } else {
+      this.selectedDecks.treasures = this.selectedDecks.treasures.filter(
+        (id) => id !== deckId
+      );
+    }
+  }
+
+  // Clear all decks of a kind
+  clearDecks(kind: DeckKind): void {
+    if (kind === "doors") {
+      this.selectedDecks.doors = [];
+    } else {
+      this.selectedDecks.treasures = [];
+    }
+  }
+
+  // Get selected deck IDs
+  getSelectedDecks(kind: DeckKind): string[] {
+    return kind === "doors"
+      ? this.selectedDecks.doors
+      : this.selectedDecks.treasures;
   }
 
   setMaxLevel(level: number): void {

@@ -166,8 +166,8 @@ export interface BeaconMessage {
   status: LobbyStatus;
   version: string;
   decks?: {
-    doors: string;
-    treasures: string;
+    doors: string[];
+    treasures: string[];
   };
 }
 
@@ -323,8 +323,8 @@ export interface LobbyInfo {
   version: string;
   lastSeen: number;
   decks?: {
-    doors: string;
-    treasures: string;
+    doors: string[];
+    treasures: string[];
   };
 }
 

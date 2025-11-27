@@ -16,8 +16,8 @@ export interface BeaconConfig {
   port: number;
   maxPlayers: number;
   decks?: {
-    doors: string;
-    treasures: string;
+    doors: string[];
+    treasures: string[];
   };
 }
 

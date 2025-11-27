@@ -1,0 +1,91 @@
+deck:
+  kind: doors
+  id: door_02
+  name: "Undead Horrors"
+  version: 1
+  language: "en"
+  cards:
+    # ========== TIER 1 MONSTERS ==========
+    - id: D101
+      tier: 1
+      type: monster
+      name: "Zombie"
+      level: 2
+      treasures: 1
+      reward: "+1 level"
+      penalty: "Discard 2 cards."
+      text: "Slow but relentless undead."
+      repeat: 2
+
+    - id: D102
+      tier: 1
+      type: monster
+      name: "Skeleton Warrior"
+      level: 3
+      treasures: 1
+      reward: "+1 level"
+      penalty: "Lose 1 item."
+      text: "Bones that refuse to rest."
+      repeat: 2
+
+    - id: D103
+      tier: 1
+      type: curse
+      name: "Curse of Weakness"
+      effect: "Lose 2 levels (minimum 1)."
+      text: "Lose 2 levels (minimum 1)."
+      repeat: 1
+
+    # ========== TIER 2 MONSTERS ==========
+    - id: D104
+      tier: 2
+      type: monster
+      name: "Vampire Spawn"
+      level: 6
+      treasures: 2
+      reward: "+2 levels"
+      penalty: "Discard 3 cards."
+      text: "Lesser vampire seeking blood."
+      repeat: 2
+
+    - id: D105
+      tier: 2
+      type: monster
+      name: "Ghoul"
+      level: 7
+      treasures: 2
+      reward: "+2 levels"
+      penalty: "Lose 1 big item."
+      text: "Flesh-eating horror."
+      repeat: 1
+
+    - id: D106
+      tier: 2
+      type: curse
+      name: "Curse of the Tomb"
+      effect: "All equipped items become cursed."
+      text: "All equipped items become cursed."
+      repeat: 1
+
+    # ========== TIER 3 MONSTERS ==========
+    - id: D107
+      tier: 3
+      type: monster
+      name: "Lich"
+      level: 12
+      treasures: 3
+      reward: "+3 levels"
+      penalty: "Discard entire hand."
+      text: "Undead wizard of immense power."
+      repeat: 1
+
+    - id: D108
+      tier: 3
+      type: monster
+      name: "Death Knight"
+      level: 14
+      treasures: 4
+      reward: "+3 levels"
+      penalty: "Lose all items."
+      text: "Fallen paladin corrupted by dark magic."
+      repeat: 1
