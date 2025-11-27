@@ -38,7 +38,10 @@ export class DiscoveryBeacon {
 
   start(): void {
     logger.info("Starting UDP beacon broadcast");
+    logger.info(`Broadcasting to 255.255.255.255:${UDP_PORT} every 2 seconds`);
     this.interval = setInterval(() => this.sendBeacon(), 2000);
+    // Send first beacon immediately
+    this.sendBeacon();
   }
 
   stop(): void {
@@ -85,6 +88,8 @@ export class DiscoveryBeacon {
     this.socket.send(buffer, UDP_PORT, "255.255.255.255", (err) => {
       if (err) {
         logger.error("Failed to send beacon:", err);
+      } else {
+        logger.debug(`Beacon sent: ${this.config.code} @ ${this.config.host}:${this.config.port}`);
       }
     });
   }

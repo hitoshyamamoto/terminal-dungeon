@@ -71,10 +71,11 @@ class TerminalDungeonClient {
     console.log(colorize("╚═══════════════════════════════════╝", "cyan"));
     console.log(`Version: ${GAME_VERSION}\n`);
     console.log("Commands:");
-    console.log("  list           - List available lobbies");
-    console.log("  join <code>    - Join a lobby");
-    console.log("  help           - Show all commands");
-    console.log("  quit           - Exit");
+    console.log("  list                  - List available lobbies");
+    console.log("  join <code>           - Join a lobby by code");
+    console.log("  connect <ip> <port>   - Connect directly to host");
+    console.log("  help                  - Show all commands");
+    console.log("  quit                  - Exit");
     console.log();
 
     this.rl.prompt();
@@ -118,6 +119,9 @@ class TerminalDungeonClient {
           break;
         case "join":
           await this.cmdJoin(parts[1]);
+          break;
+        case "connect":
+          await this.cmdConnect(parts[1], parts[2]);
           break;
         case "help":
           this.cmdHelp();
@@ -245,12 +249,68 @@ class TerminalDungeonClient {
     }
   }
 
+  private async cmdConnect(ip?: string, portStr?: string): Promise<void> {
+    if (!ip || !portStr) {
+      console.log(colorize("Usage: connect <ip> <port>", "yellow"));
+      console.log(colorize("Example: connect 192.168.1.100 4000", "dim"));
+      return;
+    }
+
+    const port = parseInt(portStr, 10);
+    if (isNaN(port) || port < 1 || port > 65535) {
+      console.log(colorize("Invalid port number.", "red"));
+      return;
+    }
+
+    // Prompt for name
+    const name = await this.prompt("Enter your name: ");
+    if (!name.trim()) {
+      console.log(colorize("Name required.", "yellow"));
+      return;
+    }
+
+    // Prompt for password
+    const password = await this.prompt("Enter lobby password: ");
+
+    // Prompt for lobby ID (optional, can use empty string)
+    const lobbyId = await this.prompt("Enter lobby ID (press Enter to skip): ");
+
+    // Connect
+    console.log(colorize(`\nConnecting to ${ip}:${port}...`, "cyan"));
+
+    this.client = new GameClient(ip, port);
+
+    this.client.onMessage = (msg) => this.handleServerMessage(msg);
+    this.client.onConnect = () => {
+      console.log(colorize("Connected!", "green"));
+      this.client!.send({
+        t: "JOIN",
+        lobbyId: lobbyId.trim() || "direct-connect",
+        name: name.trim(),
+        password,
+      });
+    };
+    this.client.onDisconnect = () => {
+      console.log(colorize("Disconnected from server.", "red"));
+      this.connected = false;
+    };
+
+    try {
+      await this.client.connect();
+    } catch (err) {
+      console.log(
+        colorize(`Failed to connect: ${(err as Error).message}`, "red")
+      );
+    }
+  }
+
   private cmdHelp(): void {
     console.log(colorize("\n=== Commands ===", "bright"));
     console.log("Pre-game:");
-    console.log("  list           - List available lobbies");
-    console.log("  join <code>    - Join a lobby");
-    console.log("  quit           - Exit");
+    console.log("  list                  - List available lobbies");
+    console.log("  join <code>           - Join a lobby by code");
+    console.log("  connect <ip> <port>   - Connect directly to host (bypass discovery)");
+    console.log("  quit                  - Exit");
     console.log("\nIn-game:");
     console.log("  help           - Show help");
     console.log("  open           - Open a door");

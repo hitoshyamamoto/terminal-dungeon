@@ -7,6 +7,7 @@
     "build": "tsc",
     "server": "node --loader ts-node/esm server/index.ts",
     "client": "node --loader ts-node/esm client/index.ts",
+    "test-udp": "node --loader ts-node/esm test-udp.ts",
     "deckcheck": "node --loader ts-node/esm scripts/deckcheck.ts",
     "test": "vitest",
     "test:integration": "node --loader ts-node/esm scripts/test-integration.ts",

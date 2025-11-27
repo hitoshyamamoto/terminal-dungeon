@@ -13,12 +13,13 @@ export class ClientDiscovery {
 
   constructor() {
     this.socket = dgram.createSocket("udp4");
-    
+
     this.socket.on("message", (msg, rinfo) => {
       try {
         const beacon = JSON.parse(msg.toString()) as BeaconMessage;
 
         if (beacon.t === "BEACON" && beacon.game === "Terminal Dungeon") {
+          console.log(`[Discovery] Received beacon from ${beacon.host}:${beacon.port} (${rinfo.address}) - Code: ${beacon.code}`);
           this.lobbies.set(beacon.lobbyId, {
             lobbyId: beacon.lobbyId,
             code: beacon.code,
@@ -31,23 +32,30 @@ export class ClientDiscovery {
             lastSeen: Date.now(),
             decks: beacon.decks,
           });
+        } else {
+          console.log(`[Discovery] Received unknown message from ${rinfo.address}:${rinfo.port}`);
         }
       } catch (err) {
-        // Ignore invalid messages
+        console.log(`[Discovery] Received non-JSON message from ${rinfo.address}:${rinfo.port}`);
       }
+    });
+
+    this.socket.on("error", (err) => {
+      console.error(`[Discovery] Socket error:`, err);
     });
   }
 
   start(): Promise<void> {
     return new Promise((resolve, reject) => {
-      this.socket.bind(UDP_PORT, () => {
-        console.log(`Listening for lobbies on UDP port ${UDP_PORT}...`);
-        this.expirationInterval = setInterval(() => this.expireLobbies(), 3000);
-        resolve();
+      this.socket.on("error", (err) => {
+        console.error(`[Discovery] Failed to bind to UDP port ${UDP_PORT}:`, err.message);
+        reject(err);
       });
 
-      this.socket.on("error", (err) => {
-        reject(err);
+      this.socket.bind(UDP_PORT, () => {
+        console.log(`[Discovery] Listening for lobbies on UDP port ${UDP_PORT}...`);
+        this.expirationInterval = setInterval(() => this.expireLobbies(), 3000);
+        resolve();
       });
     });
   }
