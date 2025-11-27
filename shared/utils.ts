@@ -2,6 +2,7 @@
 // UTILITY FUNCTIONS
 // ============================================================================
 
+import * as crypto from "crypto";
 import type { Player, ItemCard } from "./types.js";
 
 /**
@@ -96,11 +97,9 @@ export function findClosestCommand(
  * Simple hash function for passwords (SHA-256)
  */
 export async function hashPassword(password: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(password);
-  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+  const hash = crypto.createHash("sha256");
+  hash.update(password);
+  return hash.digest("hex");
 }
 
 /**
