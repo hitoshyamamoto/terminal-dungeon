@@ -1,15 +1,10 @@
 # Terminal Dungeon
 
-A simplified, text-only, LAN-synchronized, Munchkin-inspired boardgame that runs entirely in the terminal.
+> A Munchkin-inspired multiplayer card game that runs entirely in the terminal
 
-## Features
-
-- **CLI-only**: All actions via text commands, no keyboard shortcuts
-- **LAN Multiplayer**: Auto-discovery with UDP beacons, synchronized state via TCP
-- **Multiple Lobbies**: Password-protected lobbies on the same LAN
-- **Modular Decks**: Data-driven YAML decks (Doors & Treasures)
-- **Tier Progression**: Card unlock system based on player levels
-- **Server-Authoritative**: Robust rules engine with state versioning
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+[![Node](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen)](https://nodejs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue)](https://www.typescriptlang.org/)
 
 ## Quick Start
 
@@ -17,97 +12,174 @@ A simplified, text-only, LAN-synchronized, Munchkin-inspired boardgame that runs
 # Install dependencies
 npm install
 
-# Build the project
+# Build
 npm run build
 
-# Start a server (host)
+# Terminal 1: Start server/host
 npm run server
 
-# Start a client (player)
+# Terminal 2: Start client/player
 npm run client
 ```
 
+**[📖 Full Installation Guide](docs/INSTALL.md)** | **[🚀 5-Minute Quickstart](docs/QUICKSTART.md)** | **[🇧🇷 Português](README_PT.md)**
+
+---
+
+## What is Terminal Dungeon?
+
+A **text-only multiplayer card game** for 2-6 players on LAN:
+- 🎮 **38 CLI commands** - No GUI, pure terminal interface
+- 🌐 **Auto-discovery** - Find games on your network automatically
+- 🃏 **99 cards** - Complete deck system with 3 progression tiers
+- 🔒 **Password-protected lobbies** - Private games
+- 🎲 **Munchkin-style gameplay** - Battle monsters, collect loot, reach Level 15
+
+---
+
+## Features
+
+| Feature | Description |
+|---------|-------------|
+| **CLI-Only** | All actions via text commands, no keyboard shortcuts |
+| **LAN Multiplayer** | UDP auto-discovery + TCP synchronized gameplay |
+| **Multiple Lobbies** | Password-protected games on the same network |
+| **Modular Decks** | YAML-based card definitions with schema validation |
+| **Tier Progression** | Unlock stronger cards as you level up |
+| **Server-Authoritative** | Robust FSM-based rules engine |
+| **Reconnection** | Automatic state resync if disconnected |
+
+---
+
 ## Gameplay
 
-The objective is to reach **Level 15** (default, configurable). Each turn follows these phases:
+**Objective:** Be the first to reach **Level 15**!
 
-1. **Open Door**: Reveal a card from the Doors deck
-2. **Fight** (if Monster): Battle or flee
-3. **Provoke Trouble** (optional): Play a Monster from hand
-4. **Loot the Room** (if no fight): Draw a face-down Door card
-5. **End Turn**: Enforce hand limit (≤5 cards)
+**Your Turn:**
+1. **Open Door** - Reveal a Monster, Curse, or Event
+2. **Fight or Flee** - Battle monsters to gain levels and loot
+3. **Loot** - Draw treasure if you didn't fight
+4. **End Turn** - Discard down to 5 cards
 
-### Core Mechanics
+**Power = Your Level + Item Bonuses**
 
-- **Power = Level + Item Bonuses + Temporary Effects**
-- **Win Fight**: Power ≥ Monster Level → gain rewards
-- **Lose Fight**: Attempt to flee (d6: 5-6 success) or suffer penalty
-- **Death**: Lose items, -1 Level (min 1), draw 4+4 cards next turn
-- **Interaction**: Players can help or harass during fights
+[📚 Complete Rules](docs/ABOUT_GAME/rules.md) | [💬 All Commands](docs/ABOUT_GAME/commands.md)
 
-## Commands
-
-See [docs/commands.md](docs/commands.md) for the complete list of 38 commands.
-
-Key commands:
-- `list` - List available lobbies
-- `join <code>` - Join a lobby
-- `create <name>` - Create a lobby
-- `open` - Open a door
-- `fight` - Resolve combat
-- `end` - End your turn
-- `help [command]` - Get help
-
-## Decks
-
-Decks are defined in YAML format in the `decks/` directory:
-- `decks/doors/` - Door decks (Monsters, Curses, Events)
-- `decks/treasures/` - Treasure decks (Items, Instant cards, Level-ups)
-
-### Validation
-
-```bash
-npm run deckcheck
-```
-
-This validates deck schemas and provides balance hints.
-
-## Network Architecture
-
-- **UDP (Port 9999)**: Lobby discovery beacons
-- **TCP (Port 4000+)**: Game protocol, JSON-per-line
-- **Server-Authoritative**: Host runs server and plays normally
-- **State Versioning**: Reconnection support with RESYNC
+---
 
 ## Documentation
 
-- [Commands](docs/commands.md) - Complete command reference
-- [Protocol](docs/protocol.md) - Network protocol specification
-- [Networking](docs/networking.md) - LAN discovery and connection details
-- [Rules](docs/rules.md) - Complete game rules
+| Document | Description |
+|----------|-------------|
+| **[START_HERE.md](docs/START_HERE.md)** | New user guide - start here! |
+| **[QUICKSTART.md](docs/QUICKSTART.md)** | Get playing |
+| **[INSTALL.md](docs/INSTALL.md)** | Detailed installation instructions |
+| **[TESTING_GUIDE.md](docs/TESTING_GUIDE.md)** | Automated testing & simulation |
+| **[LAN_SETUP_GUIDE.md](docs/LAN_SETUP_GUIDE.md)** | Network configuration & troubleshooting |
+| **[PROJECT_SUMMARY.md](docs/PROJECT_SUMMARY.md)** | Technical overview & architecture |
+| **[CONTRIBUTING.md](CONTRIBUTING.md)** | How to contribute |
+
+### Game Documentation
+
+- [Commands Reference](docs/ABOUT_GAME/commands.md) - All 38 commands explained
+- [Game Rules](docs/ABOUT_GAME/rules.md) - Complete gameplay rules
+- [Networking Guide](docs/ABOUT_GAME/networking.md) - LAN setup & firewall
+- [Protocol Spec](docs/ABOUT_GAME/protocol.md) - Network protocol details
+- [Card Interactions](docs/ABOUT_GAME/card_interactions.md) - Card mechanics & effects
+
+---
+
+## Commands Cheat Sheet
+
+```bash
+# Lobby
+list                  # List available games
+join <code>           # Join a lobby (4-char code)
+create <name>         # Create a lobby (host)
+start                 # Start game (host, 2-6 players)
+
+# Gameplay
+open                  # Open a door
+fight                 # Fight monster
+flee                  # Attempt to flee (d6: 5-6 success)
+loot                  # Draw treasure
+end                   # End your turn
+
+# Items & Cards
+hand                  # View your hand
+equip <id>            # Equip item
+levelup               # Use "Go Up a Level" card
+view all              # See everything
+
+# Help
+help                  # Show all commands
+rules                 # Quick rules summary
+status                # Your level and power
+```
+
+---
 
 ## Development
 
 ```bash
-# Run tests
-npm test
+# Run automated tests
+npm run test:complete
 
-# Lint code
-npm run lint
+# Run game simulator
+npm run test:simulate
 
 # Validate decks
 npm run deckcheck
+
+# Lint code
+npm run lint
 ```
+
+---
 
 ## Tech Stack
 
-- **Runtime**: Node.js + TypeScript
-- **Networking**: Native `net` (TCP) and `dgram` (UDP)
-- **Validation**: Zod schemas
-- **YAML**: js-yaml
-- **Logging**: Pino
+- **Runtime:** Node.js 18+ with TypeScript
+- **Networking:** Native TCP (`net`) and UDP (`dgram`)
+- **Validation:** Zod schemas
+- **Data Format:** YAML decks (js-yaml)
+- **Logging:** Pino
+
+---
+
+## Network Ports
+
+- **UDP 9999** - Lobby discovery (beacons every 2s)
+- **TCP 4000+** - Game protocol (JSON-per-line)
+
+Make sure these ports are open in your firewall for multiplayer!
+
+---
+
+## Project Structure
+
+```
+terminal-dungeon/
+├── client/           # Client implementation
+├── server/           # Server implementation
+├── shared/           # Shared code & types
+├── decks/            # YAML card definitions
+├── docs/             # Documentation
+└── scripts/          # Utilities & tests
+```
+
+---
 
 ## License
 
-MIT
+[MIT](LICENSE) - See LICENSE file for details
 
+---
+
+## Status
+
+✅ **100% Complete** - All requirements implemented and tested!
+
+---
+
+**Ready to play?** Check out **[START_HERE.md](docs/START_HERE.md)** to get started!
