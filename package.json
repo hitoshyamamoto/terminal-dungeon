@@ -9,6 +9,9 @@
     "client": "node --loader ts-node/esm client/index.ts",
     "deckcheck": "node --loader ts-node/esm scripts/deckcheck.ts",
     "test": "vitest",
+    "test:integration": "node --loader ts-node/esm scripts/test-integration.ts",
+    "test:complete": "node --loader ts-node/esm scripts/test-suite-complete.ts",
+    "test:simulate": "node --loader ts-node/esm scripts/game-simulator.ts",
     "lint": "eslint . --ext .ts"
   },
   "keywords": ["game", "cli", "multiplayer", "lan", "munchkin"],
