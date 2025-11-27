@@ -38,6 +38,31 @@ class TerminalDungeonClient {
     this.discovery = new ClientDiscovery();
 
     this.setupCommands();
+    this.setupSignalHandlers();
+  }
+
+  private setupSignalHandlers(): void {
+    // Handle Ctrl+C (SIGINT)
+    process.on("SIGINT", () => {
+      console.log(); // New line after ^C
+      console.log(colorize("\nReceived SIGINT (Ctrl+C)", "yellow"));
+      this.shutdown();
+      process.exit(0);
+    });
+
+    // Handle kill/terminate signals (SIGTERM)
+    process.on("SIGTERM", () => {
+      console.log(colorize("\nReceived SIGTERM", "yellow"));
+      this.shutdown();
+      process.exit(0);
+    });
+
+    // Handle uncaught exceptions
+    process.on("uncaughtException", (err) => {
+      console.error("Uncaught exception:", err);
+      this.shutdown();
+      process.exit(1);
+    });
   }
 
   private setupCommands(): void {
