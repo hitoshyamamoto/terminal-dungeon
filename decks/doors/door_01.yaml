@@ -1,0 +1,267 @@
+deck:
+  kind: doors
+  id: door_01
+  name: "Classic Doors"
+  version: 1
+  language: "en"
+  cards:
+    # ========== TIER 1 MONSTERS (Level 1-5) ==========
+    - id: D001
+      tier: 1
+      type: monster
+      name: "Puny Goblin"
+      level: 2
+      treasures: 1
+      reward: "+1 level"
+      penalty: "Discard 1 card."
+      text: "A weak goblin looking for trouble."
+      repeat: 2
+
+    - id: D002
+      tier: 1
+      type: monster
+      name: "Giant Rat"
+      level: 1
+      treasures: 1
+      reward: "+1 level"
+      penalty: "Lose 1 small item."
+      text: "Squeaky and aggressive."
+      repeat: 2
+
+    - id: D003
+      tier: 1
+      type: monster
+      name: "Bandit"
+      level: 3
+      treasures: 1
+      reward: "+1 level"
+      penalty: "Lose 200 gold worth of items."
+      text: "Give me your lunch money!"
+
+    - id: D004
+      tier: 1
+      type: monster
+      name: "Skeleton"
+      level: 2
+      treasures: 1
+      reward: "+1 level"
+      penalty: "Discard your armor."
+      text: "Rattles menacingly."
+
+    - id: D005
+      tier: 1
+      type: monster
+      name: "Wild Boar"
+      level: 4
+      treasures: 2
+      reward: "+1 level"
+      penalty: "Lose your weakest item."
+      text: "Tusks and attitude."
+
+    - id: D006
+      tier: 1
+      type: monster
+      name: "Kobold Warrior"
+      level: 5
+      treasures: 2
+      reward: "+1 level"
+      penalty: "Lose 1 hand item."
+      text: "Small but fierce!"
+
+    # ========== TIER 1 CURSES ==========
+    - id: D020
+      tier: 1
+      type: curse
+      name: "Troll Tax"
+      effect: "Lose items worth 200 gold or 1 big item."
+      text: "You gotta pay the troll toll!"
+
+    - id: D021
+      tier: 1
+      type: curse
+      name: "Duck of Doom"
+      effect: "-1 Level (minimum 1)."
+      text: "Quack."
+
+    - id: D022
+      tier: 1
+      type: curse
+      name: "Lose Your Shoe"
+      effect: "Lose your footgear or -1 Level."
+      text: "Where did it go?"
+
+    # ========== TIER 1 EVENTS ==========
+    - id: D030
+      tier: 1
+      type: event
+      name: "Wandering Merchant"
+      effect: "Draw 1 Treasure card."
+      text: "Got some rare things on sale, stranger!"
+
+    - id: D031
+      tier: 1
+      type: event
+      name: "Friendly Cleric"
+      effect: "+1 Level (maximum once per turn applies)."
+      text: "Blessings upon you!"
+
+    # ========== TIER 2 MONSTERS (Level 6-10) ==========
+    - id: D100
+      tier: 2
+      type: monster
+      name: "Orc Warrior"
+      level: 6
+      treasures: 2
+      reward: "+1 level"
+      penalty: "Lose your armor and -1 Level."
+      text: "Green, mean, and ready to fight."
+      repeat: 2
+
+    - id: D101
+      tier: 2
+      type: monster
+      name: "Gelatinous Cube"
+      level: 7
+      treasures: 2
+      reward: "+1 level"
+      penalty: "Discard all your armor items."
+      text: "It's translucent and hungry."
+
+    - id: D102
+      tier: 2
+      type: monster
+      name: "Minotaur"
+      level: 8
+      treasures: 3
+      reward: "+1 level"
+      penalty: "Lose your biggest item or -2 Levels."
+      text: "Half man, half bull, all angry."
+
+    - id: D103
+      tier: 2
+      type: monster
+      name: "Dark Mage"
+      level: 9
+      treasures: 3
+      reward: "+1 level"
+      penalty: "All players lose 1 card from hand."
+      text: "Casts nasty hexes."
+
+    - id: D104
+      tier: 2
+      type: monster
+      name: "Vampire"
+      level: 10
+      treasures: 3
+      reward: "+1 level"
+      penalty: "Lose 2 Levels (minimum 1)."
+      text: "I vant to suck your levels!"
+
+    # ========== TIER 2 CURSES ==========
+    - id: D120
+      tier: 2
+      type: curse
+      name: "Curse of Weakness"
+      effect: "-2 to your next combat roll."
+      text: "You feel drained..."
+
+    - id: D121
+      tier: 2
+      type: curse
+      name: "Lose Your Class"
+      effect: "Lose all class bonuses (if any)."
+      text: "You're just a regular person now."
+
+    - id: D122
+      tier: 2
+      type: curse
+      name: "Malign Mirror"
+      effect: "Discard your headgear or lose 2 Levels."
+      text: "Your reflection mocks you."
+
+    # ========== TIER 2 EVENTS ==========
+    - id: D130
+      tier: 2
+      type: event
+      name: "Treasure Hoard"
+      effect: "Draw 2 Treasure cards."
+      text: "Jackpot!"
+
+    - id: D131
+      tier: 2
+      type: event
+      name: "Divine Intervention"
+      effect: "+1 Level and draw 1 Treasure."
+      text: "The gods smile upon you!"
+
+    # ========== TIER 3 MONSTERS (Level 11-15) ==========
+    - id: D200
+      tier: 3
+      type: monster
+      name: "Ancient Dragon"
+      level: 14
+      treasures: 4
+      reward: "+1 level"
+      penalty: "Lose ALL your items and -3 Levels."
+      text: "Fire-breathing terror of the ages."
+
+    - id: D201
+      tier: 3
+      type: monster
+      name: "Lich King"
+      level: 13
+      treasures: 4
+      reward: "+1 level"
+      penalty: "All other players gain +1 Level, you lose 2 Levels."
+      text: "Undead overlord of darkness."
+
+    - id: D202
+      tier: 3
+      type: monster
+      name: "Demon Lord"
+      level: 12
+      treasures: 3
+      reward: "+1 level"
+      penalty: "Discard half your items (rounded up)."
+      text: "Bringer of chaos and ruin."
+
+    - id: D203
+      tier: 3
+      type: monster
+      name: "Giant Kraken"
+      level: 11
+      treasures: 3
+      reward: "+1 level"
+      penalty: "Lose all hand items or -2 Levels."
+      text: "From the depths it rises!"
+
+    # ========== TIER 3 CURSES ==========
+    - id: D220
+      tier: 3
+      type: curse
+      name: "Curse of Doom"
+      effect: "Lose your most powerful item or -2 Levels."
+      text: "Darkness engulfs you."
+
+    - id: D221
+      tier: 3
+      type: curse
+      name: "Polymorph"
+      effect: "Lose ALL your items (they don't fit anymore)."
+      text: "You're a sheep now. Baaa."
+
+    # ========== TIER 3 EVENTS ==========
+    - id: D230
+      tier: 3
+      type: event
+      name: "Epic Treasure Cache"
+      effect: "Draw 3 Treasure cards."
+      text: "The motherlode!"
+
+    - id: D231
+      tier: 3
+      type: event
+      name: "Level Up!"
+      effect: "+2 Levels."
+      text: "You feel incredibly powerful!"
+

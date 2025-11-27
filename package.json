@@ -1,0 +1,34 @@
+{
+  "name": "terminal-dungeon",
+  "version": "1.0.0",
+  "description": "Terminal Dungeon - A Munchkin-inspired CLI boardgame with LAN multiplayer",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "server": "node --loader ts-node/esm server/index.ts",
+    "client": "node --loader ts-node/esm client/index.ts",
+    "deckcheck": "node --loader ts-node/esm scripts/deckcheck.ts",
+    "test": "vitest",
+    "lint": "eslint . --ext .ts"
+  },
+  "keywords": ["game", "cli", "multiplayer", "lan", "munchkin"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "js-yaml": "^4.1.0",
+    "pino": "^8.16.2",
+    "pino-pretty": "^10.2.3",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^20.10.4",
+    "@typescript-eslint/eslint-plugin": "^6.13.2",
+    "@typescript-eslint/parser": "^6.13.2",
+    "eslint": "^8.55.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3",
+    "vitest": "^1.0.4"
+  }
+}
+

@@ -1,0 +1,285 @@
+deck:
+  kind: treasures
+  id: treasure_01
+  name: "Classic Treasures"
+  version: 1
+  language: "en"
+  cards:
+    # ========== TIER 1 ITEMS ==========
+    - id: T001
+      tier: 1
+      type: item
+      name: "Dagger +2"
+      bonus: 2
+      text: "A small but sharp blade."
+      repeat: 2
+
+    - id: T002
+      tier: 1
+      type: item
+      name: "Shortsword +3"
+      bonus: 3
+      text: "Standard adventurer's weapon."
+      repeat: 2
+
+    - id: T003
+      tier: 1
+      type: item
+      name: "Leather Armor +1"
+      bonus: 1
+      text: "Basic protection."
+      repeat: 2
+
+    - id: T004
+      tier: 1
+      type: item
+      name: "Wooden Shield +2"
+      bonus: 2
+      text: "Blocks some hits."
+
+    - id: T005
+      tier: 1
+      type: item
+      name: "Iron Helmet +1"
+      bonus: 1
+      text: "Protects your noggin."
+
+    - id: T006
+      tier: 1
+      type: item
+      name: "Boots of Speed +1"
+      bonus: 1
+      text: "Run faster, fight better."
+
+    - id: T007
+      tier: 1
+      type: item
+      name: "Ring of Strength +1"
+      bonus: 1
+      text: "Feels powerful."
+      repeat: 2
+
+    - id: T008
+      tier: 1
+      type: item
+      name: "Cloak +1"
+      bonus: 1
+      text: "Stylish and protective."
+
+    # ========== TIER 1 INSTANT CARDS ==========
+    - id: T020
+      tier: 1
+      type: inst
+      name: "Healing Potion +2"
+      effect: "Use in combat: +2 to your side."
+      text: "Tastes like cherry."
+      repeat: 2
+
+    - id: T021
+      tier: 1
+      type: inst
+      name: "Fire Scroll +3"
+      effect: "Use in combat: +3 to your side."
+      text: "Burn, baby, burn!"
+
+    - id: T022
+      tier: 1
+      type: inst
+      name: "Grease Trap"
+      effect: "Use in combat: Monster gets -2."
+      text: "Slippery when wet."
+
+    # ========== TIER 1 LEVEL UP CARDS ==========
+    - id: T030
+      tier: 1
+      type: levelup
+      name: "Go Up a Level"
+      effect: "+1 Level (max 1 per turn)."
+      text: "Ding!"
+      repeat: 3
+
+    # ========== TIER 2 ITEMS ==========
+    - id: T100
+      tier: 2
+      type: item
+      name: "Longsword +4"
+      bonus: 4
+      text: "A finely crafted blade."
+      repeat: 2
+
+    - id: T101
+      tier: 2
+      type: item
+      name: "Battleaxe +5"
+      bonus: 5
+      text: "Heavy and devastating."
+
+    - id: T102
+      tier: 2
+      type: item
+      name: "Chainmail +3"
+      bonus: 3
+      text: "Solid metal protection."
+
+    - id: T103
+      tier: 2
+      type: item
+      name: "Steel Shield +4"
+      bonus: 4
+      text: "Deflects serious damage."
+
+    - id: T104
+      tier: 2
+      type: item
+      name: "Enchanted Helmet +3"
+      bonus: 3
+      text: "Glows with magic."
+
+    - id: T105
+      tier: 2
+      type: item
+      name: "Boots of Kicking +3"
+      bonus: 3
+      text: "For when you need to kick butt."
+
+    - id: T106
+      tier: 2
+      type: item
+      name: "Ring of Power +2"
+      bonus: 2
+      text: "Not THE ring, but still good."
+      repeat: 2
+
+    - id: T107
+      tier: 2
+      type: item
+      name: "Gauntlets of Strength +3"
+      bonus: 3
+      text: "Crushing grip included."
+
+    # ========== TIER 2 INSTANT CARDS ==========
+    - id: T120
+      tier: 2
+      type: inst
+      name: "Super Potion +4"
+      effect: "Use in combat: +4 to your side."
+      text: "Feels great!"
+
+    - id: T121
+      tier: 2
+      type: inst
+      name: "Lightning Bolt +5"
+      effect: "Use in combat: +5 to your side."
+      text: "Shocking!"
+
+    - id: T122
+      tier: 2
+      type: inst
+      name: "Confusion Hex"
+      effect: "Use in combat: Monster gets -4."
+      text: "The monster forgets how to fight."
+
+    - id: T123
+      tier: 2
+      type: inst
+      name: "Teleport Escape"
+      effect: "Auto-escape from any fight (counts as successful flee)."
+      text: "Beam me up, Scotty!"
+
+    # ========== TIER 2 LEVEL UP CARDS ==========
+    - id: T130
+      tier: 2
+      type: levelup
+      name: "Go Up a Level"
+      effect: "+1 Level (max 1 per turn)."
+      text: "You're getting stronger!"
+      repeat: 2
+
+    # ========== TIER 3 ITEMS ==========
+    - id: T200
+      tier: 3
+      type: item
+      name: "Legendary Sword +7"
+      bonus: 7
+      text: "Only the worthy can wield it."
+
+    - id: T201
+      tier: 3
+      type: item
+      name: "Dragon Slayer +8"
+      bonus: 8
+      text: "Forged to kill dragons."
+
+    - id: T202
+      tier: 3
+      type: item
+      name: "Plate Armor +5"
+      bonus: 5
+      text: "The finest protection money can buy."
+
+    - id: T203
+      tier: 3
+      type: item
+      name: "Tower Shield +6"
+      bonus: 6
+      text: "A walking fortress."
+
+    - id: T204
+      tier: 3
+      type: item
+      name: "Crown of Kings +4"
+      bonus: 4
+      text: "Leadership and power."
+
+    - id: T205
+      tier: 3
+      type: item
+      name: "Boots of Levitation +4"
+      bonus: 4
+      text: "Walk on air."
+
+    - id: T206
+      tier: 3
+      type: item
+      name: "Amulet of Invincibility +5"
+      bonus: 5
+      text: "Makes you nearly unstoppable."
+
+    # ========== TIER 3 INSTANT CARDS ==========
+    - id: T220
+      tier: 3
+      type: inst
+      name: "Mega Potion +6"
+      effect: "Use in combat: +6 to your side."
+      text: "Ultimate healing!"
+
+    - id: T221
+      tier: 3
+      type: inst
+      name: "Meteor Strike +8"
+      effect: "Use in combat: +8 to your side."
+      text: "From the heavens!"
+
+    - id: T222
+      tier: 3
+      type: inst
+      name: "Banishment"
+      effect: "Use in combat: Monster gets -6."
+      text: "Begone, foul creature!"
+
+    - id: T223
+      tier: 3
+      type: inst
+      name: "Divine Shield"
+      effect: "Auto-win any fight (monster must be level 12 or lower)."
+      text: "Nothing can touch you!"
+
+    # ========== TIER 3 LEVEL UP CARDS ==========
+    - id: T230
+      tier: 3
+      type: levelup
+      name: "Go Up a Level"
+      effect: "+1 Level (max 1 per turn)."
+      text: "Almost at max level!"
+      repeat: 2
+
