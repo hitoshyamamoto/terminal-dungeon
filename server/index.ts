@@ -208,25 +208,35 @@ class ServerHost {
 
     // Show IP information based on environment
     if (netInfo.isWSL) {
-      console.log(colorize("\n⚠️  WSL detected!", "yellow"));
+      console.log(colorize("\n⚠️  WSL DETECTED - LAN Setup Required!", "yellow"));
       console.log(`  WSL Internal IP: ${colorize(netInfo.wslInternalIP || "unknown", "dim")}`);
-      console.log(`  Windows Host IP: ${colorize(netInfo.windowsHostIP || "unknown", "bright")}`);
       console.log();
-      console.log(colorize("📋 For LAN multiplayer, clients should connect to:", "cyan"));
-      console.log(`   ${colorize(netInfo.windowsHostIP || netInfo.localIP, "green")}`);
+      console.log(colorize("📋 Step 1: Find your Windows IP address", "cyan"));
+      console.log(colorize("   Run in Windows PowerShell:", "dim"));
+      console.log(`   ${colorize("ipconfig", "bright")}`);
+      console.log(colorize("   Look for 'IPv4 Address' under your network adapter", "dim"));
+      console.log(colorize("   Example: 192.168.3.3 or 192.168.1.100", "dim"));
       console.log();
-      console.log(colorize("⚙️  Port forwarding required for external clients:", "yellow"));
+      console.log(colorize("📋 Step 2: Configure port forwarding", "cyan"));
       if (netInfo.wslInternalIP) {
         const cmd = getPortForwardCommand(netInfo.wslInternalIP, port);
         console.log(colorize("   Run in PowerShell as Administrator:", "dim"));
         console.log(`   ${colorize(cmd.powershell, "bright")}`);
-        console.log();
-        console.log(colorize("   Or use this firewall rule:", "dim"));
-        console.log(`   ${colorize(`netsh advfirewall firewall add rule name="Terminal Dungeon" dir=in action=allow protocol=TCP localport=${port}`, "bright")}`);
       }
       console.log();
-      console.log(colorize("💡 Alternative: Run server in native Windows PowerShell", "cyan"));
-      console.log(colorize("   (No port forwarding needed)", "dim"));
+      console.log(colorize("📋 Step 3: Allow firewall", "cyan"));
+      console.log(colorize("   Run in PowerShell as Administrator:", "dim"));
+      console.log(`   ${colorize(`netsh advfirewall firewall add rule name="Terminal Dungeon" dir=in action=allow protocol=TCP localport=${port}`, "bright")}`);
+      console.log();
+      console.log(colorize("📋 Step 4: Tell clients to connect", "cyan"));
+      console.log(colorize("   Clients should use:", "dim"));
+      console.log(`   ${colorize(`connect <your-windows-ip> ${port}`, "green")}`);
+      console.log(colorize(`   Example: connect 192.168.3.3 ${port}`, "dim"));
+      console.log();
+      console.log(colorize("💡 EASIER: Run server in Windows PowerShell instead", "cyan"));
+      console.log(colorize("   cd C:\\path\\to\\terminal-dungeon", "dim"));
+      console.log(colorize("   npm run server", "dim"));
+      console.log(colorize("   (No port forwarding needed!)", "dim"));
     } else {
       console.log(`  Server IP: ${colorize(netInfo.recommendedIP, "bright")}`);
     }

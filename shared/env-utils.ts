@@ -25,21 +25,17 @@ export function isWSL(): boolean {
 /**
  * Get the Windows host IP address when running in WSL
  * This is the IP that external devices can connect to
+ *
+ * Note: This returns null because there's no reliable way to detect
+ * the Windows physical network IP from inside WSL.
+ * Users should check Windows network settings manually.
  */
 export function getWindowsHostIP(): string | null {
   if (!isWSL()) return null;
 
-  try {
-    // Get the default gateway (Windows host) IP
-    const result = execSync(
-      "ip route show | grep -i default | awk '{print $3}'",
-      { encoding: "utf8" }
-    );
-    const ip = result.trim();
-    return ip || null;
-  } catch {
-    return null;
-  }
+  // Cannot reliably detect Windows physical IP from WSL
+  // The gateway IP (nameserver in resolv.conf) is WSL-internal
+  return null;
 }
 
 /**
