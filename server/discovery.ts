@@ -5,6 +5,8 @@
 import * as dgram from "dgram";
 import type { BeaconMessage, LobbyStatus } from "../shared/types.js";
 import { UDP_PORT, GAME_VERSION } from "../shared/types.js";
+import { isWSL } from "../shared/env-utils.js";
+import { PowerShellBeaconSender } from "../shared/powershell-udp.js";
 import pino from "pino";
 
 const logger = pino({ transport: { target: "pino-pretty" } });
@@ -27,6 +29,7 @@ export class DiscoveryBeacon {
   private interval?: NodeJS.Timeout;
   private playerCount: number = 0;
   private status: LobbyStatus = "OPEN";
+  private powershellBeacon?: PowerShellBeaconSender;
 
   constructor(config: BeaconConfig) {
     this.config = config;
@@ -34,6 +37,11 @@ export class DiscoveryBeacon {
     this.socket.bind(() => {
       this.socket.setBroadcast(true);
     });
+
+    // Initialize PowerShell beacon if in WSL
+    if (isWSL()) {
+      this.powershellBeacon = new PowerShellBeaconSender();
+    }
   }
 
   start(): void {
@@ -42,6 +50,12 @@ export class DiscoveryBeacon {
     this.interval = setInterval(() => this.sendBeacon(), 2000);
     // Send first beacon immediately
     this.sendBeacon();
+
+    // Start PowerShell beacon if in WSL
+    if (this.powershellBeacon) {
+      const beacon = this.createBeacon();
+      this.powershellBeacon.start(beacon, UDP_PORT);
+    }
   }
 
   stop(): void {
@@ -49,6 +63,12 @@ export class DiscoveryBeacon {
       clearInterval(this.interval);
     }
     this.socket.close();
+
+    // Stop PowerShell beacon
+    if (this.powershellBeacon) {
+      this.powershellBeacon.stop();
+    }
+
     logger.info("UDP beacon stopped");
   }
 
@@ -66,8 +86,8 @@ export class DiscoveryBeacon {
     this.status = status;
   }
 
-  private sendBeacon(): void {
-    const beacon: BeaconMessage = {
+  private createBeacon(): BeaconMessage {
+    return {
       t: "BEACON",
       game: "Terminal Dungeon",
       lobbyId: this.config.lobbyId,
@@ -80,7 +100,10 @@ export class DiscoveryBeacon {
       version: GAME_VERSION,
       decks: this.config.decks,
     };
+  }
 
+  private sendBeacon(): void {
+    const beacon = this.createBeacon();
     const message = JSON.stringify(beacon);
     const buffer = Buffer.from(message);
 
