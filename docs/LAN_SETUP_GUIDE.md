@@ -52,6 +52,101 @@ Enter name: Alice
 
 ---
 
+## 🪟 Servidor em WSL (Windows Subsystem for Linux)
+
+**⚠️ IMPORTANTE: Se você está rodando o servidor em WSL, precisa configurar port forwarding!**
+
+### O que é WSL?
+
+WSL permite rodar Linux dentro do Windows. Mas tem uma limitação: **WSL fica em uma rede virtual isolada**, então outros dispositivos não conseguem se conectar diretamente.
+
+### Você precisa de configuração especial WSL?
+
+| Situação | Precisa configurar? |
+|----------|---------------------|
+| Servidor rodando em **WSL** | ✅ **SIM** (este guia) |
+| Servidor rodando em **Windows PowerShell** | ❌ Não (funciona direto) |
+| Servidor rodando em **Linux nativo** | ❌ Não (funciona direto) |
+| Cliente conectando ao servidor | ❌ **Nunca** (só servidor precisa) |
+
+### Setup WSL (Apenas no PC do Servidor)
+
+**Opção A: Executar em Windows PowerShell (RECOMENDADO - Mais Fácil)**
+
+Se possível, **rode o servidor diretamente no Windows** ao invés de WSL:
+
+```powershell
+# Abra Windows PowerShell (não WSL!)
+cd C:\caminho\para\projeto
+npm run server
+```
+
+**Vantagens:** Zero configuração, funciona imediatamente!
+
+---
+
+**Opção B: Configurar Port Forwarding (WSL)**
+
+Se você **precisa** usar WSL, siga estes passos **uma vez** no PC do servidor:
+
+#### 1. Descobrir IP Interno do WSL
+
+```bash
+# Dentro do WSL:
+ip addr show eth0 | grep inet
+# Exemplo de saída: 172.27.48.73
+```
+
+#### 2. Configurar Port Forwarding no Windows
+
+**Abra PowerShell como Administrador** e execute:
+
+```powershell
+# Substituir 172.27.48.73 pelo seu IP WSL
+# Substituir 4024 pela porta que o servidor mostrou
+
+# Port forwarding (permite conexões de fora alcançarem o WSL)
+netsh interface portproxy add v4tov4 listenaddress=0.0.0.0 listenport=4024 connectaddress=172.27.48.73 connectport=4024
+
+# Firewall (permite conexões TCP na porta)
+netsh advfirewall firewall add rule name="Terminal Dungeon" dir=in action=allow protocol=TCP localport=4024
+```
+
+#### 3. Verificar Configuração
+
+```powershell
+# Listar port proxies ativos:
+netsh interface portproxy show all
+
+# Saída esperada:
+# Listen on ipv4:             Connect to ipv4:
+# Address         Port        Address         Port
+# 0.0.0.0         4024        172.27.48.73    4024
+```
+
+#### 4. Remover Configuração (Opcional)
+
+Quando não precisar mais:
+
+```powershell
+# Remover port forwarding:
+netsh interface portproxy delete v4tov4 listenaddress=0.0.0.0 listenport=4024
+
+# Remover regra de firewall:
+netsh advfirewall firewall delete rule name="Terminal Dungeon"
+```
+
+### ⚠️ Clientes NÃO Precisam Fazer Nada
+
+Se você está **conectando a um servidor** (não hospedando):
+- ❌ **Não** precisa configurar port forwarding
+- ❌ **Não** precisa executar comandos PowerShell
+- ✅ Apenas execute `npm run client` e use `join <código>`
+
+**Port forwarding é necessário APENAS no PC que roda o servidor em WSL!**
+
+---
+
 ## 🌐 Setup em Múltiplos Dispositivos
 
 ### Passo 1: Verificar Conectividade
@@ -227,11 +322,12 @@ sudo ufw disable
 # 3. Tentar rede cabeada ou hotspot
 ```
 
-### Problema: "Connection refused"
+### Problema: "Connection refused" ou "ETIMEDOUT"
 
 **Causas:**
 - Servidor não está rodando
-- Firewall bloqueando porta TCP 4000
+- **Servidor em WSL sem port forwarding configurado** ⚠️
+- Firewall bloqueando porta TCP
 - IP incorreto
 
 **Soluções:**
@@ -239,14 +335,35 @@ sudo ufw disable
 # 1. Verificar servidor rodando:
 # No PC host: deve estar no prompt do servidor
 
-# 2. Verificar porta:
+# 2. WSL? Configure port forwarding!
+# Veja seção "Servidor em WSL" acima
+# OU rode o servidor em Windows PowerShell ao invés de WSL
+
+# 3. Verificar porta:
 sudo ss -tulnp | grep 4000
 
-# 3. Testar conexão:
+# 4. Testar conexão:
 telnet [IP_DO_HOST] 4000
 # ou
 nc -zv [IP_DO_HOST] 4000
 ```
+
+### Problema: "Failed to connect: connect ETIMEDOUT" (WSL)
+
+**Causa:**
+Servidor rodando em WSL mas **port forwarding não configurado**.
+
+**Solução:**
+```powershell
+# Abra PowerShell como Administrador no PC do servidor:
+
+# Exemplo com porta 4024 e IP WSL 172.27.48.73
+netsh interface portproxy add v4tov4 listenaddress=0.0.0.0 listenport=4024 connectaddress=172.27.48.73 connectport=4024
+
+netsh advfirewall firewall add rule name="Terminal Dungeon" dir=in action=allow protocol=TCP localport=4024
+```
+
+**OU simplesmente rode o servidor em Windows PowerShell ao invés de WSL!**
 
 ### Problema: "Version mismatch"
 
