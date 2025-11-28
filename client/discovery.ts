@@ -50,7 +50,6 @@ export class ClientDiscovery {
         exclusive: false,
       }, () => {
         console.log(`[Discovery] Listening for lobbies on UDP port ${UDP_PORT}...`);
-        console.log(`[Discovery] SO_REUSEPORT enabled - multiple clients per machine allowed`);
         this.expirationInterval = setInterval(() => this.expireLobbies(), 3000);
 
         // Start PowerShell receiver if in WSL
@@ -79,7 +78,9 @@ export class ClientDiscovery {
 
   private handleBeacon(beacon: BeaconMessage, source: string): void {
     if (beacon.t === "BEACON" && beacon.game === "Terminal Dungeon") {
-      console.log(`[Discovery] Received beacon from ${beacon.host}:${beacon.port} (${source}) - Code: ${beacon.code}`);
+      // Only log if this is a new lobby (not seen before)
+      const isNew = !this.lobbies.has(beacon.lobbyId);
+
       this.lobbies.set(beacon.lobbyId, {
         lobbyId: beacon.lobbyId,
         code: beacon.code,
@@ -92,8 +93,11 @@ export class ClientDiscovery {
         lastSeen: Date.now(),
         decks: beacon.decks,
       });
-    } else {
-      console.log(`[Discovery] Received unknown message from ${source}`);
+
+      // Only log when discovering a NEW lobby
+      if (isNew) {
+        console.log(`[Discovery] Found lobby: ${beacon.code} @ ${beacon.host}:${beacon.port}`);
+      }
     }
   }
 

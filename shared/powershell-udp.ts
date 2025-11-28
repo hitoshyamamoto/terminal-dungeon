@@ -35,9 +35,7 @@ export class PowerShellBeaconSender {
       // Convert WSL path to Windows path
       const windowsScriptPath = this.convertToWindowsPath(this.scriptPath);
 
-      console.log("[PowerShell Beacon] Starting Windows UDP broadcast...");
-
-      // Spawn PowerShell process
+      // Spawn PowerShell process (silent mode)
       this.process = spawn(
         "powershell.exe",
         [
@@ -53,9 +51,9 @@ export class PowerShellBeaconSender {
         }
       );
 
-      // Log output
-      this.process.stdout?.on("data", (data) => {
-        console.log(`[PowerShell Beacon] ${data.toString().trim()}`);
+      // Suppress normal output (only show on errors)
+      this.process.stdout?.on("data", () => {
+        // Silent - beacons are working
       });
 
       this.process.stderr?.on("data", (data) => {
@@ -63,10 +61,11 @@ export class PowerShellBeaconSender {
       });
 
       this.process.on("exit", (code) => {
-        console.log(`[PowerShell Beacon] Process exited with code ${code}`);
+        if (code !== 0) {
+          console.error(`[PowerShell Beacon] Process exited with code ${code}`);
+        }
       });
 
-      console.log("[PowerShell Beacon] ✓ Windows broadcast started");
       return true;
     } catch (error) {
       console.error("[PowerShell Beacon] Failed to start:", error);
@@ -129,9 +128,7 @@ export class PowerShellBeaconReceiver {
       // Convert WSL path to Windows path
       const windowsScriptPath = this.convertToWindowsPath(this.scriptPath);
 
-      console.log("[PowerShell Receiver] Starting Windows UDP listener...");
-
-      // Spawn PowerShell process
+      // Spawn PowerShell process (silent mode)
       this.process = spawn(
         "powershell.exe",
         [
@@ -171,10 +168,11 @@ export class PowerShellBeaconReceiver {
       });
 
       this.process.on("exit", (code) => {
-        console.log(`[PowerShell Receiver] Process exited with code ${code}`);
+        if (code !== 0) {
+          console.error(`[PowerShell Receiver] Process exited with code ${code}`);
+        }
       });
 
-      console.log("[PowerShell Receiver] ✓ Windows listener started");
       return true;
     } catch (error) {
       console.error("[PowerShell Receiver] Failed to start:", error);
