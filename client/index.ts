@@ -157,6 +157,13 @@ class TerminalDungeonClient {
     if (lobbies.length === 0) {
       console.log(colorize("No lobbies found.", "yellow"));
       console.log();
+      console.log(colorize("💡 Troubleshooting:", "cyan"));
+      console.log("  • Make sure server is running and you're on the same network");
+      console.log("  • If server is in WSL, it may not broadcast properly");
+      console.log("  • Try direct connection:");
+      console.log(colorize("    > connect <server-ip> <port>", "bright"));
+      console.log(colorize("    Example: connect 192.168.3.3 4000", "dim"));
+      console.log();
       return;
     }
 

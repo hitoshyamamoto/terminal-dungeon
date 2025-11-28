@@ -16,6 +16,10 @@ import {
   hashPassword,
   colorize,
 } from "../shared/utils.js";
+import {
+  getNetworkInfo,
+  getPortForwardCommand,
+} from "../shared/env-utils.js";
 import { TCP_BASE_PORT } from "../shared/types.js";
 import { findAvailablePortSmart } from "../shared/port-utils.js";
 import type { ClientMessage, ActionMessage } from "../shared/types.js";
@@ -183,12 +187,14 @@ class ServerHost {
     this.server.onMessage = (playerId, msg) => this.handleClientMessage(playerId, msg);
     await this.server.start();
 
-    // Start UDP beacon
-    const localIp = this.getLocalIp();
+    // Get network information
+    const netInfo = getNetworkInfo();
+
+    // Start UDP beacon with recommended IP
     this.beacon = new DiscoveryBeacon({
       lobbyId,
       code,
-      host: localIp,
+      host: netInfo.recommendedIP,
       port,
       maxPlayers: 6,
       decks: this.lobby.selectedDecks,
@@ -199,7 +205,31 @@ class ServerHost {
     console.log(`  Code: ${colorize(code, "bright")}`);
     console.log(`  Lobby ID: ${lobbyId}`);
     console.log(`  Port: ${port}`);
-    console.log(`  Local IP: ${localIp}`);
+
+    // Show IP information based on environment
+    if (netInfo.isWSL) {
+      console.log(colorize("\n⚠️  WSL detected!", "yellow"));
+      console.log(`  WSL Internal IP: ${colorize(netInfo.wslInternalIP || "unknown", "dim")}`);
+      console.log(`  Windows Host IP: ${colorize(netInfo.windowsHostIP || "unknown", "bright")}`);
+      console.log();
+      console.log(colorize("📋 For LAN multiplayer, clients should connect to:", "cyan"));
+      console.log(`   ${colorize(netInfo.windowsHostIP || netInfo.localIP, "green")}`);
+      console.log();
+      console.log(colorize("⚙️  Port forwarding required for external clients:", "yellow"));
+      if (netInfo.wslInternalIP) {
+        const cmd = getPortForwardCommand(netInfo.wslInternalIP, port);
+        console.log(colorize("   Run in PowerShell as Administrator:", "dim"));
+        console.log(`   ${colorize(cmd.powershell, "bright")}`);
+        console.log();
+        console.log(colorize("   Or use this firewall rule:", "dim"));
+        console.log(`   ${colorize(`netsh advfirewall firewall add rule name="Terminal Dungeon" dir=in action=allow protocol=TCP localport=${port}`, "bright")}`);
+      }
+      console.log();
+      console.log(colorize("💡 Alternative: Run server in native Windows PowerShell", "cyan"));
+      console.log(colorize("   (No port forwarding needed)", "dim"));
+    } else {
+      console.log(`  Server IP: ${colorize(netInfo.recommendedIP, "bright")}`);
+    }
     console.log();
   }
 
