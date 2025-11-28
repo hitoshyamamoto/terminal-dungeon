@@ -30,6 +30,7 @@ export class GameServer {
 
   onMessage?: (playerId: string, message: ClientMessage) => void;
   onDisconnect?: (playerId: string) => void;
+  onJoin?: (socket: net.Socket, lobbyId: string, name: string, password: string) => Promise<{ success: boolean; playerId?: string; error?: string }>;
 
   constructor(port: number) {
     this.port = port;
@@ -71,7 +72,7 @@ export class GameServer {
     let buffer = "";
     let clientId: string | null = null;
 
-    socket.on("data", (data) => {
+    socket.on("data", async (data) => {
       buffer += data.toString();
       const lines = buffer.split("\n");
       buffer = lines.pop() || "";
@@ -83,7 +84,22 @@ export class GameServer {
           const message = JSON.parse(line) as ClientMessage;
 
           if (message.t === "JOIN") {
-            clientId = this.registerClient(socket, message.name);
+            if (this.onJoin) {
+              const result = await this.onJoin(socket, message.lobbyId, message.name, message.password);
+              if (result.success && result.playerId) {
+                clientId = result.playerId;
+                this.clients.set(clientId, {
+                  socket,
+                  playerId: clientId,
+                  playerName: message.name,
+                  lastPing: Date.now(),
+                });
+                logger.info(`Registered client ${clientId} (${message.name})`);
+              } else {
+                socket.write(JSON.stringify({ t: "ERROR", msg: result.error || "Failed to join" }) + "\n");
+                socket.destroy();
+              }
+            }
           } else if (message.t === "PING") {
             this.send(clientId!, { t: "PONG" });
             if (clientId) {
@@ -116,18 +132,6 @@ export class GameServer {
     socket.on("error", (err) => {
       logger.error(`Socket error for ${address}:`, err);
     });
-  }
-
-  private registerClient(socket: net.Socket, name: string): string {
-    const playerId = `p${this.clients.size + 1}`;
-    this.clients.set(playerId, {
-      socket,
-      playerId,
-      playerName: name,
-      lastPing: Date.now(),
-    });
-    logger.info(`Registered client ${playerId} (${name})`);
-    return playerId;
   }
 
   send(playerId: string, message: ServerMessage): void {

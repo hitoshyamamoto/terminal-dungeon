@@ -4,6 +4,7 @@
 
 import * as readline from "readline";
 import * as os from "os";
+import * as net from "net";
 import { Lobby } from "./lobby.js";
 import { Game } from "./game.js";
 import { GameServer } from "./net.js";
@@ -22,7 +23,7 @@ import {
 } from "../shared/env-utils.js";
 import { TCP_BASE_PORT } from "../shared/types.js";
 import { findAvailablePortSmart } from "../shared/port-utils.js";
-import type { ClientMessage, ActionMessage } from "../shared/types.js";
+import type { ClientMessage, ActionMessage, WelcomeMessage } from "../shared/types.js";
 import pino from "pino";
 
 const logger = pino({ transport: { target: "pino-pretty" } });
@@ -185,6 +186,7 @@ class ServerHost {
     // Start TCP server
     this.server = new GameServer(port);
     this.server.onMessage = (playerId, msg) => this.handleClientMessage(playerId, msg);
+    this.server.onJoin = async (socket, lobbyId, name, password) => this.handleJoin(socket, lobbyId, name, password);
     await this.server.start();
 
     // Get network information
@@ -507,6 +509,109 @@ class ServerHost {
 
     this.lobby.clearDecks(kind);
     console.log(colorize(`✓ Cleared all ${kind} decks`, "green"));
+  }
+
+  private async handleJoin(
+    socket: net.Socket,
+    lobbyId: string,
+    name: string,
+    password: string
+  ): Promise<{ success: boolean; playerId?: string; error?: string }> {
+    // Check if lobby exists
+    if (!this.lobby) {
+      return { success: false, error: "Lobby does not exist" };
+    }
+
+    // Verify lobby ID
+    if (this.lobby.lobbyId !== lobbyId) {
+      return { success: false, error: "Invalid lobby ID" };
+    }
+
+    // Generate player ID
+    const playerId = `p${this.lobby.players.size}`;
+
+    // Verify password
+    try {
+      const passwordValid = await this.lobby.verifyPassword(password, playerId);
+      if (!passwordValid) {
+        return { success: false, error: "Incorrect password" };
+      }
+    } catch (err) {
+      return { success: false, error: (err as Error).message };
+    }
+
+    // Add player to lobby
+    const added = this.lobby.addPlayer(playerId, name);
+    if (!added) {
+      return { success: false, error: "Lobby is full or game already started" };
+    }
+
+    logger.info(`Player ${name} (${playerId}) joined lobby ${this.lobby.code}`);
+
+    // Update beacon with new player count
+    if (this.beacon) {
+      this.beacon.updatePlayerCount(this.lobby.players.size);
+    }
+
+    // Send WELCOME message
+    // If game hasn't started, send a lobby state. If game started, send actual game state
+    if (this.game) {
+      // Game already started - send actual game state
+      socket.write(JSON.stringify({
+        t: "WELCOME",
+        you: playerId,
+        state: this.game.state,
+        decks: {
+          doors: this.game.doorsDeck.definition,
+          treasures: this.game.treasuresDeck.definition,
+        },
+        manifest: this.lobby.manifest,
+      } as WelcomeMessage) + "\n");
+    } else {
+      // Game not started - send minimal lobby state
+      socket.write(JSON.stringify({
+        t: "WELCOME",
+        you: playerId,
+        state: this.createLobbyState(),
+        decks: {
+          doors: { kind: "doors" as const, id: "lobby", name: "Waiting for game...", version: 1, language: "en", cards: [] },
+          treasures: { kind: "treasures" as const, id: "lobby", name: "Waiting for game...", version: 1, language: "en", cards: [] },
+        },
+        manifest: this.lobby.manifest,
+      } as WelcomeMessage) + "\n");
+    }
+
+    return { success: true, playerId };
+  }
+
+  private createLobbyState(): any {
+    // Create a minimal game state for lobby waiting room
+    const players: Record<string, any> = {};
+    for (const [id, player] of this.lobby!.players) {
+      players[id] = {
+        id,
+        name: player.name,
+        level: 1,
+        hand: [],
+        equipped: [],
+        isDead: false,
+      };
+    }
+
+    return {
+      rev: 0,
+      phase: "LOBBY" as any,
+      activePlayer: this.lobby!.hostId,
+      players,
+      turnOrder: Array.from(this.lobby!.players.keys()),
+      currentTurnIndex: 0,
+      doorsDeck: [],
+      treasuresDeck: [],
+      doorsDiscard: [],
+      treasuresDiscard: [],
+      maxLevel: this.lobby!.manifest.maxLevel,
+      foughtThisTurn: false,
+    };
   }
 
   private handleClientMessage(playerId: string, msg: ClientMessage): void {
