@@ -26,16 +26,46 @@ export function isWSL(): boolean {
  * Get the Windows host IP address when running in WSL
  * This is the IP that external devices can connect to
  *
- * Note: This returns null because there's no reliable way to detect
- * the Windows physical network IP from inside WSL.
- * Users should check Windows network settings manually.
+ * Executes PowerShell from WSL to get the physical network IP
  */
 export function getWindowsHostIP(): string | null {
   if (!isWSL()) return null;
 
-  // Cannot reliably detect Windows physical IP from WSL
-  // The gateway IP (nameserver in resolv.conf) is WSL-internal
-  return null;
+  try {
+    // Execute PowerShell command from WSL to get Windows IP
+    // Get IPv4 from Wi-Fi or Ethernet adapters, excluding link-local addresses
+    const result = execSync(
+      `powershell.exe -Command "Get-NetIPAddress -AddressFamily IPv4 | Where-Object {\\$_.InterfaceAlias -like 'Wi-Fi*' -or \\$_.InterfaceAlias -like 'Ethernet*'} | Where-Object {\\$_.IPAddress -notlike '169.254.*'} | Select-Object -First 1 -ExpandProperty IPAddress"`,
+      { encoding: "utf8", timeout: 5000 }
+    );
+
+    const ip = result.trim().replace(/\r?\n/g, '');
+
+    // Validate IP format
+    if (ip && /^(\d{1,3}\.){3}\d{1,3}$/.test(ip)) {
+      return ip;
+    }
+
+    return null;
+  } catch (error) {
+    // Fallback: try simpler method with ipconfig
+    try {
+      const result = execSync(
+        `powershell.exe -Command "ipconfig" | grep -A 4 "Wireless LAN\\|Ethernet adapter" | grep "IPv4" | head -1`,
+        { encoding: "utf8", timeout: 5000 }
+      );
+
+      // Extract IP from output like "   IPv4 Address. . . . . . . . . . . : 192.168.1.100"
+      const match = result.match(/(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/);
+      if (match && match[1]) {
+        return match[1];
+      }
+    } catch {
+      // Ignore fallback errors
+    }
+
+    return null;
+  }
 }
 
 /**
