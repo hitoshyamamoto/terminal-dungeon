@@ -187,6 +187,7 @@ class ServerHost {
     this.server = new GameServer(port);
     this.server.onMessage = (playerId, msg) => this.handleClientMessage(playerId, msg);
     this.server.onJoin = async (socket, lobbyId, name, password) => this.handleJoin(socket, lobbyId, name, password);
+    this.server.onRejoin = async (socket, sessionToken) => this.handleRejoin(socket, sessionToken);
     await this.server.start();
 
     // Get network information
@@ -516,7 +517,7 @@ class ServerHost {
     lobbyId: string,
     name: string,
     password: string
-  ): Promise<{ success: boolean; playerId?: string; error?: string }> {
+  ): Promise<{ success: boolean; playerId?: string; error?: string; sessionToken?: string }> {
     // Check if lobby exists
     if (!this.lobby) {
       return { success: false, error: "Lobby does not exist" };
@@ -548,6 +549,9 @@ class ServerHost {
 
     logger.info(`Player ${name} (${playerId}) joined lobby ${this.lobby.code}`);
 
+    // Generate unique session token
+    const sessionToken = generateLobbyId(); // Reuse this function for unique token
+
     // Update beacon with new player count
     if (this.beacon) {
       this.beacon.updatePlayerCount(this.lobby.players.size);
@@ -560,6 +564,7 @@ class ServerHost {
       socket.write(JSON.stringify({
         t: "WELCOME",
         you: playerId,
+        sessionToken,
         state: this.game.state,
         decks: {
           doors: this.game.doorsDeck.definition,
@@ -572,6 +577,7 @@ class ServerHost {
       socket.write(JSON.stringify({
         t: "WELCOME",
         you: playerId,
+        sessionToken,
         state: this.createLobbyState(),
         decks: {
           doors: { kind: "doors" as const, id: "lobby", name: "Waiting for game...", version: 1, language: "en", cards: [] },
@@ -581,7 +587,60 @@ class ServerHost {
       } as WelcomeMessage) + "\n");
     }
 
-    return { success: true, playerId };
+    return { success: true, playerId, sessionToken };
+  }
+
+  private async handleRejoin(
+    socket: net.Socket,
+    sessionToken: string
+  ): Promise<{ success: boolean; playerId?: string; error?: string }> {
+    // Check if lobby exists
+    if (!this.lobby) {
+      return { success: false, error: "Lobby does not exist" };
+    }
+
+    // Check if server has the disconnected session
+    if (!this.server?.hasDisconnectedSession(sessionToken)) {
+      return { success: false, error: "Session not found or expired" };
+    }
+
+    const session = this.server.getDisconnectedSession(sessionToken);
+    if (!session) {
+      return { success: false, error: "Session not found" };
+    }
+
+    logger.info(`Player ${session.playerName} (${session.playerId}) rejoining lobby ${this.lobby.code}`);
+
+    // Send WELCOME message with restored state
+    if (this.game) {
+      // Game already started - send actual game state
+      socket.write(JSON.stringify({
+        t: "WELCOME",
+        you: session.playerId,
+        sessionToken,
+        state: this.game.state,
+        decks: {
+          doors: this.game.doorsDeck.definition,
+          treasures: this.game.treasuresDeck.definition,
+        },
+        manifest: this.lobby.manifest,
+      } as WelcomeMessage) + "\n");
+    } else {
+      // Game not started - send minimal lobby state
+      socket.write(JSON.stringify({
+        t: "WELCOME",
+        you: session.playerId,
+        sessionToken,
+        state: this.createLobbyState(),
+        decks: {
+          doors: { kind: "doors" as const, id: "lobby", name: "Waiting for game...", version: 1, language: "en", cards: [] },
+          treasures: { kind: "treasures" as const, id: "lobby", name: "Waiting for game...", version: 1, language: "en", cards: [] },
+        },
+        manifest: this.lobby.manifest,
+      } as WelcomeMessage) + "\n");
+    }
+
+    return { success: true, playerId: session.playerId };
   }
 
   private createLobbyState(): any {

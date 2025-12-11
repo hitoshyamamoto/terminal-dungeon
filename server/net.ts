@@ -19,18 +19,29 @@ export interface ConnectedClient {
   socket: net.Socket;
   playerId: string;
   playerName: string;
+  sessionToken: string;
   lastPing: number;
+}
+
+export interface DisconnectedSession {
+  playerId: string;
+  playerName: string;
+  sessionToken: string;
+  disconnectedAt: number;
 }
 
 export class GameServer {
   private server: net.Server;
   private clients: Map<string, ConnectedClient> = new Map();
+  private disconnectedSessions: Map<string, DisconnectedSession> = new Map();
+  private sessionTimeout = 5 * 60 * 1000; // 5 minutes
   private port: number;
   private keepAliveInterval?: NodeJS.Timeout;
 
   onMessage?: (playerId: string, message: ClientMessage) => void;
   onDisconnect?: (playerId: string) => void;
-  onJoin?: (socket: net.Socket, lobbyId: string, name: string, password: string) => Promise<{ success: boolean; playerId?: string; error?: string }>;
+  onJoin?: (socket: net.Socket, lobbyId: string, name: string, password: string) => Promise<{ success: boolean; playerId?: string; error?: string; sessionToken?: string }>;
+  onRejoin?: (socket: net.Socket, sessionToken: string) => Promise<{ success: boolean; playerId?: string; error?: string }>;
 
   constructor(port: number) {
     this.port = port;
@@ -86,17 +97,42 @@ export class GameServer {
           if (message.t === "JOIN") {
             if (this.onJoin) {
               const result = await this.onJoin(socket, message.lobbyId, message.name, message.password);
-              if (result.success && result.playerId) {
+              if (result.success && result.playerId && result.sessionToken) {
                 clientId = result.playerId;
                 this.clients.set(clientId, {
                   socket,
                   playerId: clientId,
                   playerName: message.name,
+                  sessionToken: result.sessionToken,
                   lastPing: Date.now(),
                 });
                 logger.info(`Registered client ${clientId} (${message.name})`);
               } else {
                 socket.write(JSON.stringify({ t: "ERROR", msg: result.error || "Failed to join" }) + "\n");
+                socket.destroy();
+              }
+            }
+          } else if (message.t === "REJOIN") {
+            if (this.onRejoin) {
+              const result = await this.onRejoin(socket, message.sessionToken);
+              if (result.success && result.playerId) {
+                clientId = result.playerId;
+                
+                // Restore from disconnected session
+                const session = this.disconnectedSessions.get(message.sessionToken);
+                if (session) {
+                  this.clients.set(clientId, {
+                    socket,
+                    playerId: clientId,
+                    playerName: session.playerName,
+                    sessionToken: message.sessionToken,
+                    lastPing: Date.now(),
+                  });
+                  this.disconnectedSessions.delete(message.sessionToken);
+                  logger.info(`Client ${clientId} (${session.playerName}) rejoined`);
+                }
+              } else {
+                socket.write(JSON.stringify({ t: "ERROR", msg: result.error || "Failed to rejoin" }) + "\n");
                 socket.destroy();
               }
             }
@@ -122,6 +158,18 @@ export class GameServer {
     socket.on("close", () => {
       logger.info(`Connection closed: ${address}`);
       if (clientId) {
+        const client = this.clients.get(clientId);
+        if (client) {
+          // Save session for potential reconnection
+          this.disconnectedSessions.set(client.sessionToken, {
+            playerId: client.playerId,
+            playerName: client.playerName,
+            sessionToken: client.sessionToken,
+            disconnectedAt: Date.now(),
+          });
+          logger.info(`Saved session for ${client.playerName} (${clientId})`);
+        }
+        
         this.clients.delete(clientId);
         if (this.onDisconnect) {
           this.onDisconnect(clientId);
@@ -184,6 +232,7 @@ export class GameServer {
     this.keepAliveInterval = setInterval(() => {
       const now = Date.now();
 
+      // Check connected clients
       for (const [id, client] of this.clients.entries()) {
         // Disconnect if no ping for 30s
         if (now - client.lastPing > 30000) {
@@ -198,6 +247,14 @@ export class GameServer {
           this.send(id, { t: "PONG" });
         }
       }
+
+      // Clean up expired disconnected sessions
+      for (const [token, session] of this.disconnectedSessions.entries()) {
+        if (now - session.disconnectedAt > this.sessionTimeout) {
+          logger.info(`Session expired for ${session.playerName} (${session.playerId})`);
+          this.disconnectedSessions.delete(token);
+        }
+      }
     }, 10000); // Every 10s
   }
 
@@ -207,6 +264,14 @@ export class GameServer {
 
   getClients(): Map<string, ConnectedClient> {
     return this.clients;
+  }
+
+  getDisconnectedSession(sessionToken: string): DisconnectedSession | undefined {
+    return this.disconnectedSessions.get(sessionToken);
+  }
+
+  hasDisconnectedSession(sessionToken: string): boolean {
+    return this.disconnectedSessions.has(sessionToken);
   }
 }
 

@@ -178,6 +178,11 @@ export interface JoinMessage {
   password: string;
 }
 
+export interface RejoinMessage {
+  t: "REJOIN";
+  sessionToken: string;
+}
+
 export interface ActionMessage {
   t: "ACTION";
   kind:
@@ -224,6 +229,7 @@ export interface PingMessage {
 
 export type ClientMessage =
   | JoinMessage
+  | RejoinMessage
   | ActionMessage
   | ChatMessage
   | WhisperMessage
@@ -233,6 +239,7 @@ export type ClientMessage =
 export interface WelcomeMessage {
   t: "WELCOME";
   you: string;
+  sessionToken: string;
   state: GameState;
   decks: {
     doors: DeckDefinition;
