@@ -89,9 +89,11 @@ export class Lobby {
   }
 
   canStart(): boolean {
+    // players.size includes p0 host, so minimum is 2 (p0 + 1 real player)
+    // This allows for 1-6 real players (2-7 total including p0)
     return (
       this.players.size >= 2 &&
-      this.players.size <= this.maxPlayers &&
+      this.players.size <= this.maxPlayers + 1 && // +1 for p0
       !this.inGame
     );
   }
