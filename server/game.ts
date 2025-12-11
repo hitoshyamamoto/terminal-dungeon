@@ -594,8 +594,18 @@ export class Game {
 
     if (card.type === "inst") {
       // Instant card (e.g., potion in fight)
-      if (this.state.phase === "FIGHT") {
+      if (this.state.phase === "FIGHT" && this.state.fight) {
         events.push(`@you played ${card.name}: ${card.effect}`);
+
+        // Parse and apply bonus from card effect (e.g., "+2 to your side")
+        const bonusMatch = card.effect.match(/\+(\d+)/);
+        if (bonusMatch) {
+          const bonus = parseInt(bonusMatch[1]);
+          this.state.fight.modifiers += bonus;
+          this.state.fight.playerPower = calculatePower(player) + this.state.fight.modifiers;
+          events.push(`@you gained +${bonus} combat power!`);
+        }
+
         player.hand = player.hand.filter((c) => c.id !== action.cardId);
         this.state.treasuresDiscard.push(card);
         this.state.rev++;
