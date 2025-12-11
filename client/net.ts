@@ -18,6 +18,7 @@ export class GameClient {
   private lobbyId?: string;
   private playerName?: string;
   private password?: string;
+  private pingInterval?: NodeJS.Timeout;
 
   onMessage?: (message: ServerMessage) => void;
   onConnect?: () => void;
@@ -34,6 +35,7 @@ export class GameClient {
         { host: this.host, port: this.port },
         () => {
           this.reconnectAttempts = 0;
+          this.startPingInterval();
           if (this.onConnect) {
             this.onConnect();
           }
@@ -44,6 +46,7 @@ export class GameClient {
       this.socket.on("data", (data) => this.handleData(data));
 
       this.socket.on("close", () => {
+        this.stopPingInterval();
         if (this.onDisconnect) {
           this.onDisconnect();
         }
@@ -80,6 +83,7 @@ export class GameClient {
 
   disconnect(): void {
     this.shouldReconnect = false;
+    this.stopPingInterval();
     if (this.socket) {
       this.socket.destroy();
     }
@@ -140,6 +144,21 @@ export class GameClient {
         console.error("Reconnect failed:", err);
       });
     }, delay);
+  }
+
+  private startPingInterval(): void {
+    // Send PING every 10 seconds to keep connection alive
+    // Server times out after 30s without ping
+    this.pingInterval = setInterval(() => {
+      this.send({ t: "PING" });
+    }, 10000);
+  }
+
+  private stopPingInterval(): void {
+    if (this.pingInterval) {
+      clearInterval(this.pingInterval);
+      this.pingInterval = undefined;
+    }
   }
 }
 
