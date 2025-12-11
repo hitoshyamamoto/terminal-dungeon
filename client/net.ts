@@ -13,6 +13,11 @@ export class GameClient {
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
   private reconnectDelay = 2000;
+  private shouldReconnect = true;
+  private sessionToken?: string;
+  private lobbyId?: string;
+  private playerName?: string;
+  private password?: string;
 
   onMessage?: (message: ServerMessage) => void;
   onConnect?: () => void;
@@ -51,6 +56,16 @@ export class GameClient {
     });
   }
 
+  sendRejoin(): void {
+    if (this.sessionToken) {
+      this.send({ t: "REJOIN", sessionToken: this.sessionToken });
+    }
+  }
+
+  sendJoin(lobbyId: string, name: string, password: string): void {
+    this.send({ t: "JOIN", lobbyId, name, password });
+  }
+
   send(message: ClientMessage): void {
     if (this.socket && !this.socket.destroyed) {
       this.socket.write(JSON.stringify(message) + "\n");
@@ -58,9 +73,24 @@ export class GameClient {
   }
 
   disconnect(): void {
+    this.shouldReconnect = false;
     if (this.socket) {
       this.socket.destroy();
     }
+  }
+
+  disableReconnect(): void {
+    this.shouldReconnect = false;
+  }
+
+  setSessionToken(token: string): void {
+    this.sessionToken = token;
+  }
+
+  setConnectionInfo(lobbyId: string, name: string, password: string): void {
+    this.lobbyId = lobbyId;
+    this.playerName = name;
+    this.password = password;
   }
 
   private handleData(data: Buffer): void {
@@ -83,6 +113,10 @@ export class GameClient {
   }
 
   private attemptReconnect(): void {
+    if (!this.shouldReconnect) {
+      return;
+    }
+
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
       console.error("Max reconnect attempts reached.");
       return;

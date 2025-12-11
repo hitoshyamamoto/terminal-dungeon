@@ -26,6 +26,7 @@ class TerminalDungeonClient {
   private myId?: string;
   private myHand: Card[] = [];
   private connected = false;
+  private reconnectAttempts = 0;
 
   constructor() {
     this.rl = readline.createInterface({
@@ -232,19 +233,24 @@ class TerminalDungeonClient {
 
     this.client = new GameClient(lobby.host, lobby.port);
 
+    // Save connection info for reconnection
+    this.client.setConnectionInfo(lobby.lobbyId, name.trim(), password);
+
     this.client.onMessage = (msg) => this.handleServerMessage(msg);
     this.client.onConnect = () => {
       console.log(colorize("Connected!", "green"));
-      this.client!.send({
-        t: "JOIN",
-        lobbyId: lobby.lobbyId,
-        name: name.trim(),
-        password,
-      });
+      
+      // Try REJOIN first if we have a session token, otherwise JOIN
+      if (this.reconnectAttempts > 0 && this.client) {
+        this.client.sendRejoin();
+      } else {
+        this.client!.sendJoin(lobby.lobbyId, name.trim(), password);
+      }
     };
     this.client.onDisconnect = () => {
       console.log(colorize("Disconnected from server.", "red"));
       this.connected = false;
+      this.reconnectAttempts++;
     };
 
     try {
@@ -287,19 +293,26 @@ class TerminalDungeonClient {
 
     this.client = new GameClient(ip, port);
 
+    const finalLobbyId = lobbyId.trim() || "direct-connect";
+    
+    // Save connection info for reconnection
+    this.client.setConnectionInfo(finalLobbyId, name.trim(), password);
+
     this.client.onMessage = (msg) => this.handleServerMessage(msg);
     this.client.onConnect = () => {
       console.log(colorize("Connected!", "green"));
-      this.client!.send({
-        t: "JOIN",
-        lobbyId: lobbyId.trim() || "direct-connect",
-        name: name.trim(),
-        password,
-      });
+      
+      // Try REJOIN first if we have a session token, otherwise JOIN
+      if (this.reconnectAttempts > 0 && this.client) {
+        this.client.sendRejoin();
+      } else {
+        this.client!.sendJoin(finalLobbyId, name.trim(), password);
+      }
     };
     this.client.onDisconnect = () => {
       console.log(colorize("Disconnected from server.", "red"));
       this.connected = false;
+      this.reconnectAttempts++;
     };
 
     try {
@@ -357,6 +370,11 @@ class TerminalDungeonClient {
     this.myId = msg.you;
     this.connected = true;
 
+    // Save session token for reconnection
+    if (this.client && msg.sessionToken) {
+      this.client.setSessionToken(msg.sessionToken);
+    }
+
     // Extract my hand from state
     const me = msg.state.players[msg.you];
     if (me) {
@@ -412,6 +430,28 @@ class TerminalDungeonClient {
 
   private handleError(msg: ErrorMessage): void {
     console.log(colorize(`[ERROR] ${msg.msg}`, "red"));
+
+    // Disable reconnect for fatal errors
+    const fatalErrors = [
+      "Lobby is full",
+      "game already started",
+      "Invalid password",
+      "Lobby not found",
+    ];
+
+    if (fatalErrors.some((err) => msg.msg.includes(err))) {
+      console.log(
+        colorize(
+          "\n⚠ Cannot reconnect - please use 'list' to find another lobby or 'quit' to exit.",
+          "yellow"
+        )
+      );
+      if (this.client) {
+        this.client.disableReconnect();
+        this.client.disconnect();
+      }
+      this.connected = false;
+    }
   }
 
   private prompt(question: string): Promise<string> {
