@@ -324,9 +324,14 @@ class ServerHost {
 
     // Broadcast WELCOME to all clients
     for (const [id, player] of this.lobby.players) {
+      // Get sessionToken from connected client
+      const connectedClient = this.server?.getClients().get(id);
+      const sessionToken = connectedClient?.sessionToken || generateLobbyId();
+      
       this.server?.send(id, {
         t: "WELCOME",
         you: id,
+        sessionToken,
         state: this.game.state,
         decks: {
           doors: doorDeck.definition,
