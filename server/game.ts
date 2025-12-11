@@ -232,6 +232,36 @@ export class Game {
     } else {
       // event
       events.push(`@you opened a Door: ${doorCard.name} - ${doorCard.effect}`);
+
+      // Apply event effects automatically
+      if (doorCard.name === "Friendly Cleric" || doorCard.effect.includes("+1 Level")) {
+        // Check if player can still level up this turn
+        if (!player.levelUpsThisTurn || player.levelUpsThisTurn < 1) {
+          if (player.level < this.manifest.maxLevel) {
+            player.level++;
+            player.levelUpsThisTurn = (player.levelUpsThisTurn || 0) + 1;
+            events.push(`@you gained +1 level! Now Level ${player.level}.`);
+          } else {
+            events.push(`@you are already at max level!`);
+          }
+        } else {
+          events.push(`Maximum level-ups per turn already used.`);
+        }
+      } else if (doorCard.name === "Wandering Merchant" || doorCard.effect.includes("Draw 1 Treasure")) {
+        // Draw a treasure card
+        const treasure = drawCardWithTier(
+          this.state.treasuresDeck,
+          player.level,
+          this.treasuresDeck.cardsByTier
+        );
+        if (treasure) {
+          player.hand.push(treasure);
+          events.push(`@you drew a Treasure card!`);
+        } else {
+          events.push(`Treasure deck is empty!`);
+        }
+      }
+
       this.state.doorsDiscard.push(doorCard);
       this.state.phase = "OPTIONAL_TROUBLE";
     }
