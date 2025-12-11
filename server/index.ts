@@ -533,8 +533,33 @@ class ServerHost {
       return { success: false, error: "Invalid lobby ID" };
     }
 
-    // Generate player ID
-    const playerId = `p${this.lobby.players.size}`;
+    // Check if player with same name already exists
+    let playerId: string | undefined;
+    let existingPlayerId: string | undefined;
+    
+    for (const [id, player] of this.lobby.players) {
+      if (player.name === name) {
+        existingPlayerId = id;
+        break;
+      }
+    }
+
+    if (existingPlayerId) {
+      // Player with same name exists - check if they're disconnected
+      const isConnected = this.server?.getClients().has(existingPlayerId);
+      
+      if (isConnected) {
+        // Player is still connected - reject duplicate name
+        return { success: false, error: "A player with this name is already in the lobby" };
+      }
+      
+      // Player is disconnected - reuse their ID (replace ghost player)
+      playerId = existingPlayerId;
+      logger.info(`Player ${name} rejoining as ${playerId} (replacing disconnected player)`);
+    } else {
+      // New player - generate new ID
+      playerId = `p${this.lobby.players.size}`;
+    }
 
     // Verify password
     try {
@@ -546,19 +571,23 @@ class ServerHost {
       return { success: false, error: (err as Error).message };
     }
 
-    // Add player to lobby
-    const added = this.lobby.addPlayer(playerId, name);
-    if (!added) {
-      return { success: false, error: "Lobby is full or game already started" };
+    // Add or update player in lobby
+    if (!existingPlayerId) {
+      const added = this.lobby.addPlayer(playerId, name);
+      if (!added) {
+        return { success: false, error: "Lobby is full or game already started" };
+      }
+      logger.info(`Player ${name} (${playerId}) joined lobby ${this.lobby.code}`);
+    } else {
+      // Player already exists, just update the name (in case it changed)
+      logger.info(`Player ${name} (${playerId}) reconnected to lobby ${this.lobby.code}`);
     }
 
-    logger.info(`Player ${name} (${playerId}) joined lobby ${this.lobby.code}`);
-
     // Generate unique session token
-    const sessionToken = generateLobbyId(); // Reuse this function for unique token
+    const sessionToken = generateLobbyId();
 
-    // Update beacon with new player count
-    if (this.beacon) {
+    // Update beacon with player count (only if new player)
+    if (this.beacon && !existingPlayerId) {
       this.beacon.updatePlayerCount(this.lobby.players.size);
     }
 
