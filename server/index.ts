@@ -265,10 +265,13 @@ class ServerHost {
       return;
     }
 
-    if (!this.lobby.canStart()) {
+    // Count real players (excluding p0 host)
+    const realPlayerCount = this.lobby.players.size - 1; // -1 for p0
+
+    if (realPlayerCount < 1 || realPlayerCount > 6) {
       console.log(
         colorize(
-          `Cannot start. Need 2-6 players. Currently: ${this.lobby.players.size}`,
+          `Cannot start. Need 1-6 players. Currently: ${realPlayerCount} (excluding host)`,
           "yellow"
         )
       );
@@ -300,10 +303,13 @@ class ServerHost {
     const doorDeck = mergeDecks(selectedDoorDecks);
     const treasureDeck = mergeDecks(selectedTreasureDecks);
 
-    // Create game
-    const playerIds = Array.from(this.lobby.players.keys());
+    // Create game (exclude p0 host from actual gameplay)
+    const allPlayerIds = Array.from(this.lobby.players.keys());
+    const playerIds = allPlayerIds.filter(id => id !== "p0");
     const playerNames = new Map(
-      Array.from(this.lobby.players.values()).map((p) => [p.id, p.name])
+      Array.from(this.lobby.players.values())
+        .filter(p => p.id !== "p0")
+        .map((p) => [p.id, p.name])
     );
 
     this.game = new Game(
@@ -322,12 +328,15 @@ class ServerHost {
     console.log(`First turn: ${playerNames.get(playerIds[0])}`);
     console.log();
 
-    // Broadcast WELCOME to all clients
+    // Broadcast WELCOME to all clients (excluding p0 host)
     for (const [id, player] of this.lobby.players) {
+      // Skip p0 host
+      if (id === "p0") continue;
+
       // Get sessionToken from connected client
       const connectedClient = this.server?.getClients().get(id);
       const sessionToken = connectedClient?.sessionToken || generateLobbyId();
-      
+
       this.server?.send(id, {
         t: "WELCOME",
         you: id,
