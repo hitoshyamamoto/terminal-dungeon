@@ -122,13 +122,18 @@ export class CommandHandler {
           break;
         case "provoke":
           if (args.length === 0) {
-            console.log(colorize("Usage: provoke <card_id>", "yellow"));
+            console.log(colorize("Usage: provoke <card_id or index>", "yellow"));
           } else {
-            this.client.send({
-              t: "ACTION",
-              kind: "PROVOKE",
-              cardId: args[0],
-            });
+            const cardId = this.getCardIdFromIndexOrId(args[0]);
+            if (!cardId) {
+              console.log(colorize(`Card '${args[0]}' not found in your hand.`, "red"));
+            } else {
+              this.client.send({
+                t: "ACTION",
+                kind: "PROVOKE",
+                cardId,
+              });
+            }
           }
           break;
         case "loot":
@@ -169,24 +174,34 @@ export class CommandHandler {
           break;
         case "play":
           if (args.length === 0) {
-            console.log(colorize("Usage: play <card_id>", "yellow"));
+            console.log(colorize("Usage: play <card_id or index>", "yellow"));
           } else {
-            this.client.send({
-              t: "ACTION",
-              kind: "PLAY",
-              cardId: args[0],
-            });
+            const cardId = this.getCardIdFromIndexOrId(args[0]);
+            if (!cardId) {
+              console.log(colorize(`Card '${args[0]}' not found in your hand.`, "red"));
+            } else {
+              this.client.send({
+                t: "ACTION",
+                kind: "PLAY",
+                cardId,
+              });
+            }
           }
           break;
         case "equip":
           if (args.length === 0) {
-            console.log(colorize("Usage: equip <card_id>", "yellow"));
+            console.log(colorize("Usage: equip <card_id or index>", "yellow"));
           } else {
-            this.client.send({
-              t: "ACTION",
-              kind: "EQUIP",
-              cardId: args[0],
-            });
+            const cardId = this.getCardIdFromIndexOrId(args[0]);
+            if (!cardId) {
+              console.log(colorize(`Card '${args[0]}' not found in your hand.`, "red"));
+            } else {
+              this.client.send({
+                t: "ACTION",
+                kind: "EQUIP",
+                cardId,
+              });
+            }
           }
           break;
         case "unequip":
@@ -205,13 +220,18 @@ export class CommandHandler {
           break;
         case "discard":
           if (args.length === 0) {
-            console.log(colorize("Usage: discard <card_id>", "yellow"));
+            console.log(colorize("Usage: discard <card_id or index>", "yellow"));
           } else {
-            this.client.send({
-              t: "ACTION",
-              kind: "DISCARD",
-              cardId: args[0],
-            });
+            const cardId = this.getCardIdFromIndexOrId(args[0]);
+            if (!cardId) {
+              console.log(colorize(`Card '${args[0]}' not found in your hand.`, "red"));
+            } else {
+              this.client.send({
+                t: "ACTION",
+                kind: "DISCARD",
+                cardId,
+              });
+            }
           }
           break;
 
@@ -314,6 +334,22 @@ export class CommandHandler {
     console.log(`Phase: ${this.currentState.phase}`);
     console.log(`Your Turn: ${this.currentState.active === this.myId ? "Yes" : "No"}`);
     console.log();
+  }
+
+  /**
+   * Helper to get card ID from index or ID string
+   * Returns null if not found
+   */
+  private getCardIdFromIndexOrId(idOrIndex: string): string | null {
+    // Try as index first
+    const index = parseInt(idOrIndex);
+    if (!isNaN(index) && index >= 0 && index < this.myHand.length) {
+      return this.myHand[index].id;
+    }
+
+    // Try as ID
+    const card = this.myHand.find((c) => c.id === idOrIndex);
+    return card ? card.id : null;
   }
 
   private cmdShow(args: string[]): void {
