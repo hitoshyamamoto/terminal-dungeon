@@ -198,11 +198,14 @@ export class GameServer {
   }
 
   broadcastState(state: GameState): void {
-    const stateMsg = this.buildStateMessage(state);
-    this.broadcast(stateMsg);
+    // Send personalized state to each player with their hand
+    for (const [playerId, client] of this.clients.entries()) {
+      const stateMsg = this.buildStateMessage(state, playerId);
+      client.socket.write(JSON.stringify(stateMsg) + "\n");
+    }
   }
 
-  private buildStateMessage(state: GameState): StateMessage {
+  private buildStateMessage(state: GameState, forPlayerId?: string): StateMessage {
     const players = state.turnOrder.map((id) => {
       const p = state.players[id];
       return {
@@ -216,7 +219,7 @@ export class GameServer {
       };
     });
 
-    return {
+    const baseMsg: StateMessage = {
       t: "STATE",
       rev: state.rev,
       phase: state.phase,
@@ -226,6 +229,13 @@ export class GameServer {
       turnOrder: state.turnOrder,
       currentTurnIndex: state.currentTurnIndex,
     };
+
+    // Include player's hand if forPlayerId is specified
+    if (forPlayerId && state.players[forPlayerId]) {
+      baseMsg.yourHand = state.players[forPlayerId].hand;
+    }
+
+    return baseMsg;
   }
 
   private startKeepAlive(): void {

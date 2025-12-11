@@ -410,6 +410,14 @@ class TerminalDungeonClient {
   }
 
   private handleState(msg: StateMessage): void {
+    // Update my hand from the state if provided
+    if (msg.yourHand) {
+      this.myHand = msg.yourHand;
+      if (this.commandHandler) {
+        this.commandHandler.setHand(this.myHand);
+      }
+    }
+
     if (this.commandHandler) {
       this.commandHandler.setState(msg);
     }

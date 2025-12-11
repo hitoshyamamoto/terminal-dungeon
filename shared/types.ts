@@ -265,6 +265,7 @@ export interface StateMessage {
   fight?: FightState;
   turnOrder: string[];
   currentTurnIndex: number;
+  yourHand?: Card[]; // Only sent to the specific player
 }
 
 export interface EventMessage {
