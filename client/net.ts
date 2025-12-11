@@ -56,14 +56,20 @@ export class GameClient {
     });
   }
 
-  sendRejoin(): void {
+  sendRejoin(): boolean {
     if (this.sessionToken) {
       this.send({ t: "REJOIN", sessionToken: this.sessionToken });
+      return true;
     }
+    return false;
   }
 
   sendJoin(lobbyId: string, name: string, password: string): void {
     this.send({ t: "JOIN", lobbyId, name, password });
+  }
+
+  clearSession(): void {
+    this.sessionToken = undefined;
   }
 
   send(message: ClientMessage): void {

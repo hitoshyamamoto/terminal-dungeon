@@ -242,7 +242,11 @@ class TerminalDungeonClient {
       
       // Try REJOIN first if we have a session token, otherwise JOIN
       if (this.reconnectAttempts > 0 && this.client) {
-        this.client.sendRejoin();
+        const rejoinSent = this.client.sendRejoin();
+        if (!rejoinSent) {
+          // No session token, fallback to JOIN
+          this.client!.sendJoin(lobby.lobbyId, name.trim(), password);
+        }
       } else {
         this.client!.sendJoin(lobby.lobbyId, name.trim(), password);
       }
@@ -304,7 +308,11 @@ class TerminalDungeonClient {
       
       // Try REJOIN first if we have a session token, otherwise JOIN
       if (this.reconnectAttempts > 0 && this.client) {
-        this.client.sendRejoin();
+        const rejoinSent = this.client.sendRejoin();
+        if (!rejoinSent) {
+          // No session token, fallback to JOIN
+          this.client!.sendJoin(finalLobbyId, name.trim(), password);
+        }
       } else {
         this.client!.sendJoin(finalLobbyId, name.trim(), password);
       }
@@ -430,6 +438,15 @@ class TerminalDungeonClient {
 
   private handleError(msg: ErrorMessage): void {
     console.log(colorize(`[ERROR] ${msg.msg}`, "red"));
+
+    // Handle session expiration - clear token and try JOIN on next attempt
+    if (msg.msg.includes("Session not found") || msg.msg.includes("expired")) {
+      console.log(colorize("Session expired, will try fresh login on reconnect...", "yellow"));
+      if (this.client) {
+        this.client.clearSession();
+      }
+      return;
+    }
 
     // Disable reconnect for fatal errors
     const fatalErrors = [
